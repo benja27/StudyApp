@@ -5,6 +5,7 @@ import TextCreator from './components/TextCreator';
 import TextDetails from './components/TextDetails';
 import StudySession from './components/StudySession';
 import CsvGenerator from './components/CsvGenerator';
+import EasterEgg from './components/EasterEgg';
 
 function App() {
   const { loadData, isLoaded, activeScreen } = useAppStore();
@@ -43,6 +44,9 @@ function App() {
         {activeScreen === 'STUDY_SESSION' && <StudySession />}
         {activeScreen === 'GENERATE_CSV' && <CsvGenerator />}
       </main>
+      
+      {/* Full screen routes that ignore global layout padding */}
+      {activeScreen === 'EASTER_EGG' && <EasterEgg />}
     </div>
   );
 }

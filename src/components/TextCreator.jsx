@@ -30,6 +30,16 @@ export default function TextCreator() {
       return;
     }
     
+    // Easter Egg detection
+    const w = trimmedTitle.toLowerCase();
+    const isMitchVariant = ['mitch', 'michell', 'mich', 'michel', 'mitchell', 'michy'].includes(w);
+    
+    if (isMitchVariant) {
+      setTitle(''); // reset
+      navigate('EASTER_EGG');
+      return;
+    }
+
     // Check if title already exists to avoid collisions since title is the ID
     const exists = texts.some(t => t.id.toLowerCase() === trimmedTitle.toLowerCase());
     if (exists) {
