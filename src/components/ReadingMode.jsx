@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { playAudio } from '../utils/tts';
 
-export default function ReadingMode({ list, pauseSeconds, speed, selectedVoice, onFinish }) {
+export default function ReadingMode({ list, pauseSeconds, speed, selectedVoice, selectedVoiceEn, onFinish }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [step, setStep] = useState('INIT'); // INIT, ES, PAUSE, EN, DONE
   const cycleIdRef = useRef(0);
@@ -20,10 +20,8 @@ export default function ReadingMode({ list, pauseSeconds, speed, selectedVoice, 
     if (cycleId !== cycleIdRef.current) return;
 
     if (index >= list.length) {
-      setStep('DONE');
-      setTimeout(() => {
-        if (cycleId === cycleIdRef.current) onFinish();
-      }, 2000);
+      setCurrentIndex(0);
+      startCycle(0, cycleId);
       return;
     }
 
@@ -43,7 +41,7 @@ export default function ReadingMode({ list, pauseSeconds, speed, selectedVoice, 
 
     // 3. Reproducir Inglés
     setStep('EN');
-    await playAudio(card.back, 'en-US', speed);
+    await playAudio(card.back, 'en-US', speed, selectedVoiceEn);
     if (cycleId !== cycleIdRef.current) return;
 
     // Siguiente Tarjeta

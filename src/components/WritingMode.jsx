@@ -3,7 +3,7 @@ import { playAudio } from '../utils/tts';
 import { calculateSimilarity } from '../utils/stringMath';
 import { CornerDownLeft, AlertCircle } from 'lucide-react';
 
-export default function WritingMode({ list, speed, onFinish }) {
+export default function WritingMode({ list, speed, selectedVoice, selectedVoiceEn, onFinish }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [step, setStep] = useState('INIT'); // INIT, ES, INPUT, ERROR, SUCCESS, DONE
   const [inputValue, setInputValue] = useState('');
@@ -24,8 +24,8 @@ export default function WritingMode({ list, speed, onFinish }) {
     if (cycleId !== cycleIdRef.current) return;
 
     if (index >= list.length) {
-      setStep('DONE');
-      setTimeout(() => { if (cycleId === cycleIdRef.current) onFinish(); }, 2000);
+      setCurrentIndex(0);
+      startCycle(0, cycleId);
       return;
     }
 
@@ -35,7 +35,7 @@ export default function WritingMode({ list, speed, onFinish }) {
 
     // Reproducir español
     setStep('ES');
-    await playAudio(card.front, 'es-ES', speed);
+    await playAudio(card.front, 'es-ES', speed, selectedVoice);
     if (cycleId !== cycleIdRef.current) return;
 
     // Permitir escribir
@@ -59,7 +59,7 @@ export default function WritingMode({ list, speed, onFinish }) {
 
     if (score >= 80) {
       setStep('SUCCESS');
-      playAudio(card.back, 'en-US', speed);
+      playAudio(card.back, 'en-US', speed, selectedVoiceEn);
       
       // Delay de éxito y cambio al siguiente
       const currentCycleId = cycleIdRef.current;
@@ -72,7 +72,7 @@ export default function WritingMode({ list, speed, onFinish }) {
     } else {
       setStep('ERROR');
       setErrorDetails({ score: Math.round(score), expected: card.back, input: inputValue });
-      playAudio("Incorrecto. Intenta de nuevo.", 'es-ES', speed);
+      playAudio("Incorrecto. Intenta de nuevo.", 'es-ES', speed, selectedVoice);
     }
   };
 

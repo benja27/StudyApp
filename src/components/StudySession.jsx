@@ -16,7 +16,9 @@ export default function StudySession() {
   const [isRandom, setIsRandom] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [voices, setVoices] = useState([]);
+  const [enVoices, setEnVoices] = useState([]);
   const [selectedVoice, setSelectedVoice] = useState('');
+  const [selectedVoiceEn, setSelectedVoiceEn] = useState('');
 
   // Active cards (shuffled if needed)
   const [activeList, setActiveList] = useState([]);
@@ -24,10 +26,18 @@ export default function StudySession() {
   useEffect(() => {
     if (!window.speechSynthesis) return;
     const loadVoices = () => {
-      const availableVoices = window.speechSynthesis.getVoices().filter(v => v.lang.startsWith('es'));
+      const allVoices = window.speechSynthesis.getVoices();
+      const availableVoices = allVoices.filter(v => v.lang.startsWith('es'));
+      const availableEnVoices = allVoices.filter(v => v.lang.startsWith('en'));
+      
       setVoices(availableVoices);
+      setEnVoices(availableEnVoices);
+      
       if (availableVoices.length > 0 && !selectedVoice) {
         setSelectedVoice(availableVoices[0].voiceURI);
+      }
+      if (availableEnVoices.length > 0 && !selectedVoiceEn) {
+        setSelectedVoiceEn(availableEnVoices[0].voiceURI);
       }
     };
     
@@ -35,7 +45,7 @@ export default function StudySession() {
     if (window.speechSynthesis.onvoiceschanged !== undefined) {
       window.speechSynthesis.onvoiceschanged = loadVoices;
     }
-  }, [selectedVoice]);
+  }, [selectedVoice, selectedVoiceEn]);
 
   useEffect(() => {
     // Exclude cards consisting only of a single period
@@ -105,7 +115,7 @@ export default function StudySession() {
                   />
                   <div className="text-right text-sm text-primary-600 font-black mt-2">{speed.toFixed(1)}x</div>
                 </div>
-                <div className="sm:col-span-2 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                <div className="sm:col-span-1 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
                   <label className="block text-sm font-bold text-slate-600 mb-2">Voz en Español</label>
                   <select 
                     value={selectedVoice} 
@@ -116,6 +126,19 @@ export default function StudySession() {
                       <option key={i} value={v.voiceURI}>{v.name} ({v.lang})</option>
                     ))}
                     {voices.length === 0 && <option value="">No hay voces disponibles</option>}
+                  </select>
+                </div>
+                <div className="sm:col-span-1 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
+                  <label className="block text-sm font-bold text-slate-600 mb-2">Voz en Inglés</label>
+                  <select 
+                    value={selectedVoiceEn} 
+                    onChange={(e) => setSelectedVoiceEn(e.target.value)}
+                    className="w-full p-2 border border-slate-200 rounded-lg text-sm bg-slate-50 focus:ring-2 focus:ring-primary-500"
+                  >
+                    {enVoices.map((v, i) => (
+                      <option key={i} value={v.voiceURI}>{v.name} ({v.lang})</option>
+                    ))}
+                    {enVoices.length === 0 && <option value="">No hay voces disponibles</option>}
                   </select>
                 </div>
                 <div className="sm:col-span-2 flex items-center justify-between bg-white p-4 rounded-xl border border-slate-100 shadow-sm cursor-pointer hover:bg-slate-50" onClick={() => setIsRandom(!isRandom)}>
@@ -181,6 +204,7 @@ export default function StudySession() {
           pauseSeconds={pauseSeconds} 
           speed={speed} 
           selectedVoice={selectedVoice}
+          selectedVoiceEn={selectedVoiceEn}
           onFinish={handleStop} 
         />
       )}
@@ -189,6 +213,8 @@ export default function StudySession() {
         <WritingMode 
           list={activeList} 
           speed={speed} 
+          selectedVoice={selectedVoice}
+          selectedVoiceEn={selectedVoiceEn}
           onFinish={handleStop} 
         />
       )}
