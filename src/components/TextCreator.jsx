@@ -129,6 +129,23 @@ export default function TextCreator() {
                 />
               </div>
             </div>
+
+            <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Dificultad (Estrellas)</span>
+              <div className="flex bg-slate-100 p-1 rounded-lg gap-1 border border-slate-200">
+                {[1, 2, 3].map(s => (
+                  <button
+                    key={s}
+                    onClick={() => updateCard(card.id, 'stars', s)}
+                    className={`px-3 py-1 rounded-md text-sm font-bold transition-all ${card.stars === s ? 'bg-amber-100 text-amber-700 shadow-sm border border-amber-300 transform scale-105' : 'text-slate-500 hover:bg-slate-200 border border-transparent'}`}
+                    type="button"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+
           </div>
         ))}
       </div>

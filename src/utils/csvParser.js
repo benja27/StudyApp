@@ -9,12 +9,49 @@ export function parseTextsFromCSV(csvText) {
   
   const textsMap = new Map();
 
+  const parseCSVLine = (text) => {
+    const result = [];
+    let cur = '';
+    let inQuotes = false;
+    for (let i = 0; i < text.length; i++) {
+        const char = text[i];
+        if (inQuotes) {
+            if (char === '"') {
+                if (i + 1 < text.length && text[i + 1] === '"') {
+                    cur += '"';
+                    i++;
+                } else {
+                    inQuotes = false;
+                }
+            } else {
+                cur += char;
+            }
+        } else {
+            if (char === '"') {
+                inQuotes = true;
+            } else if (char === ',') {
+                result.push(cur);
+                cur = '';
+            } else {
+                cur += char;
+            }
+        }
+    }
+    result.push(cur);
+    return result;
+  };
+
   for (let i = startIndex; i < lines.length; i++) {
-    // Basic CSV split
-    const parts = lines[i].split(',');
+    const parts = parseCSVLine(lines[i]);
     const title = parts[0]?.trim() || '';
     const spanish = parts[1]?.trim() || '';
     const english = parts[2]?.trim() || '';
+    const starsRaw = parts[3]?.trim();
+    
+    let stars = parseInt(starsRaw, 10);
+    if (isNaN(stars) || stars < 1 || stars > 3) {
+      stars = 1;
+    }
     
     if (!title || (!spanish && !english)) continue;
 
@@ -32,7 +69,7 @@ export function parseTextsFromCSV(csvText) {
       front: spanish,
       back: english,
       isActive: false, 
-      stars: 1
+      stars: stars
     });
   }
 

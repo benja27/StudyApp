@@ -1,12 +1,14 @@
 import { useState, useRef } from 'react';
 import { useAppStore } from '../store/appStore';
-import { Plus, BookOpen, Play, Upload, FileText } from 'lucide-react';
+import { Plus, BookOpen, Play, Upload, FileText, Pencil, Check, X } from 'lucide-react';
 import { parseTextsFromCSV } from '../utils/csvParser';
 
 export default function Home() {
   const { texts, saveText, updateText, navigate, startStudySession } = useAppStore();
   const [showAll, setShowAll] = useState(false);
-  const [starFilter, setStarFilter] = useState(3);
+  const [selectedStars, setSelectedStars] = useState([1, 2, 3]);
+  const [editingTextId, setEditingTextId] = useState(null);
+  const [editTitleValue, setEditTitleValue] = useState('');
   const fileInputRef = useRef(null);
 
   const displayedTexts = showAll ? texts : texts.slice(0, 5);
@@ -46,12 +48,22 @@ export default function Home() {
     reader.readAsText(file);
   };
 
+  const handleSaveTitle = async (textToEdit) => {
+    if (!editTitleValue.trim() || editTitleValue.trim() === textToEdit.title) {
+      setEditingTextId(null);
+      return;
+    }
+    await updateText({ ...textToEdit, title: editTitleValue.trim() });
+    setEditingTextId(null);
+  };
+
   const handleStartGlobalStudy = () => {
-    // Extract all cards from all texts that match the star filter
+    // Extract all cards from all texts that match the star filters
     const cardsToStudy = [];
     texts.forEach(text => {
       text.cards.forEach(card => {
-        if (card.stars === starFilter) {
+        const cardStars = card.stars || 1;
+        if (selectedStars.includes(cardStars)) {
           cardsToStudy.push({ ...card, textTitle: text.title });
         }
       });
@@ -60,7 +72,16 @@ export default function Home() {
     if (cardsToStudy.length > 0) {
       startStudySession(cardsToStudy);
     } else {
-      alert("No hay tarjetas con " + starFilter + " estrellas en toda la biblioteca.");
+      alert("No hay tarjetas que coincidan con los filtros de estrellas seleccionados.");
+    }
+  };
+
+  const toggleStar = (s) => {
+    if (selectedStars.includes(s)) {
+      if (selectedStars.length === 1) return; // Prevent unselecting the last one
+      setSelectedStars(selectedStars.filter(star => star !== s));
+    } else {
+      setSelectedStars([...selectedStars, s]);
     }
   };
 
@@ -118,8 +139,8 @@ export default function Home() {
             {[1, 2, 3].map(s => (
               <button 
                 key={s} 
-                onClick={() => setStarFilter(s)}
-                className={`px-4 py-1.5 rounded-md text-sm font-bold transition-colors ${starFilter === s ? 'bg-white shadow-sm text-primary-700' : 'text-slate-500 hover:bg-slate-200'}`}
+                onClick={() => toggleStar(s)}
+                className={`px-4 py-1.5 rounded-md text-sm font-bold transition-colors ${selectedStars.includes(s) ? 'bg-white shadow-sm text-primary-700' : 'text-slate-500 hover:bg-slate-200'}`}
               >
                 {s} Estrella{s > 1 ? 's' : ''}
               </button>
@@ -164,8 +185,38 @@ export default function Home() {
           <div className="grid gap-4">
             {displayedTexts.map(text => (
               <div key={text.id} className="bg-white p-5 rounded-xl shadow-sm border border-slate-200 hover:border-primary-200 transition-colors flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <h4 className="text-lg font-bold text-slate-800">{text.title}</h4>
+                <div className="flex-1">
+                  {editingTextId === text.id ? (
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="text"
+                        autoFocus
+                        value={editTitleValue}
+                        onChange={e => setEditTitleValue(e.target.value)}
+                        className="text-lg font-bold text-slate-800 bg-slate-50 border border-primary-500 rounded-md px-2 py-1 w-full max-w-sm outline-none"
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') handleSaveTitle(text);
+                          if (e.key === 'Escape') setEditingTextId(null);
+                        }}
+                      />
+                      <button onClick={() => handleSaveTitle(text)} className="p-1.5 text-green-600 hover:bg-green-50 rounded-md" title="Guardar"><Check size={18} /></button>
+                      <button onClick={() => setEditingTextId(null)} className="p-1.5 text-red-600 hover:bg-red-50 rounded-md" title="Cancelar"><X size={18} /></button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 group">
+                      <h4 className="text-lg font-bold text-slate-800">{text.title}</h4>
+                      <button 
+                        onClick={() => {
+                          setEditingTextId(text.id);
+                          setEditTitleValue(text.title);
+                        }} 
+                        className="p-1 text-slate-400 hover:text-primary-600 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Editar título"
+                      >
+                        <Pencil size={18} />
+                      </button>
+                    </div>
+                  )}
                   <p className="text-sm text-slate-500 mt-1">{text.cards?.length || 0} tarjetas</p>
                 </div>
                 <button 

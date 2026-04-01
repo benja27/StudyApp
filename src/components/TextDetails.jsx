@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useAppStore } from '../store/appStore';
-import { ArrowLeft, Play, Save, CheckSquare, Square, Trash2, Pencil, X } from 'lucide-react';
+import { ArrowLeft, Play, Save, CheckSquare, Square, Trash2, Pencil, X, Download, Plus } from 'lucide-react';
 
 export default function TextDetails() {
   const { texts, activeTextId, updateText, deleteText, navigate, startStudySession } = useAppStore();
@@ -14,6 +14,7 @@ export default function TextDetails() {
   const [editingCardId, setEditingCardId] = useState(null);
   const [editFront, setEditFront] = useState('');
   const [editBack, setEditBack] = useState('');
+  const [inlineStars, setInlineStars] = useState(1);
 
   if (!text) {
     return (
@@ -74,6 +75,46 @@ export default function TextDetails() {
     }
   };
 
+  const escapeCSV = (str) => {
+    if (!str) return '';
+    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
+      return `"${str.replace(/"/g, '""')}"`;
+    }
+    return str;
+  };
+
+  const handleDownloadCSV = () => {
+    let csvOutput = "title,spanish,english,stars\n";
+    cards.forEach(card => {
+      csvOutput += `${escapeCSV(text.title)},${escapeCSV(card.front)},${escapeCSV(card.back)},${card.stars || 1}\n`;
+    });
+    const blob = new Blob([csvOutput], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${text.title}.csv`;
+    link.click();
+  };
+
+  const handleAddInlineCard = () => {
+    if (!editFront.trim() || !editBack.trim()) {
+      alert("Por favor llena ambos textos para crear la tarjeta.");
+      return;
+    }
+    const newCard = {
+      id: crypto.randomUUID(),
+      front: editFront,
+      back: editBack,
+      isActive: true, // starts active by default
+      stars: inlineStars
+    };
+    setCards([...cards, newCard]);
+    setEditFront('');
+    setEditBack('');
+    setInlineStars(1);
+    setHasChanges(true);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -90,6 +131,13 @@ export default function TextDetails() {
           <h2 className="text-2xl font-bold text-slate-800">{text.title}</h2>
         </div>
         <div className="flex items-center gap-2">
+          <button 
+            onClick={handleDownloadCSV}
+            className="flex items-center gap-2 px-3 py-2 text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-lg text-sm font-semibold transition-colors shadow-sm whitespace-nowrap"
+            title="Exportar tarjetas a CSV"
+          >
+            <Download size={18} className="hidden sm:inline" /> CSV
+          </button>
           <button 
             onClick={handleDeleteText}
             className="p-2.5 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border border-transparent hover:border-red-100"
@@ -214,6 +262,73 @@ export default function TextDetails() {
             </div>
           </div>
         ))}
+        
+        {/* INLINE CARD CREATION FORM */}
+        <div className="bg-slate-50 p-4 sm:p-5 rounded-xl border-2 border-dashed border-slate-300 mt-4 flex flex-col gap-4">
+          <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Añadir nueva tarjeta rápidamente</h4>
+          <div className="flex-1 grid md:grid-cols-2 gap-4 w-full">
+            <div className="flex flex-col">
+              <span className="text-[10px] text-primary-500 font-bold uppercase tracking-wider block mb-1">Español</span>
+              <textarea 
+                value={editingCardId === 'NEW' ? editFront : ''} 
+                onChange={e => {
+                  if(editingCardId !== 'NEW') { setEditingCardId('NEW'); setEditBack(''); setInlineStars(1); }
+                  setEditFront(e.target.value);
+                }} 
+                onClick={() => { if(editingCardId !== 'NEW') { setEditingCardId('NEW'); setEditFront(''); setEditBack(''); setInlineStars(1); } }}
+                placeholder="Escribe el lado en español..."
+                className="w-full min-h-[80px] text-slate-800 text-sm md:text-base font-medium bg-white border border-slate-200 rounded-lg p-3 outline-none focus:ring-2 focus:ring-primary-500 transition-all resize-none" 
+              />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] text-primary-500 font-bold uppercase tracking-wider block mb-1">Inglés</span>
+              <textarea 
+                value={editingCardId === 'NEW' ? editBack : ''} 
+                onChange={e => {
+                  if(editingCardId !== 'NEW') { setEditingCardId('NEW'); setEditFront(''); setInlineStars(1); }
+                  setEditBack(e.target.value);
+                }} 
+                onClick={() => { if(editingCardId !== 'NEW') { setEditingCardId('NEW'); setEditFront(''); setEditBack(''); setInlineStars(1); } }}
+                placeholder="Escribe el lado en inglés..."
+                className="w-full min-h-[80px] text-slate-800 text-sm md:text-base font-medium bg-white border border-slate-200 rounded-lg p-3 outline-none focus:ring-2 focus:ring-primary-500 transition-all resize-none" 
+              />
+            </div>
+          </div>
+          {editingCardId === 'NEW' && (
+            <>
+              <div className="flex items-center gap-3 pt-2">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Dificultad de la tarjeta:</span>
+                <div className="flex bg-slate-100 p-1 rounded-lg gap-1 border border-slate-200">
+                  {[1, 2, 3].map(s => (
+                    <button
+                      key={s}
+                      onClick={() => setInlineStars(s)}
+                      className={`px-3 py-1 rounded-md text-sm font-bold transition-all ${inlineStars === s ? 'bg-amber-100 text-amber-700 shadow-sm border border-amber-300 transform scale-105' : 'text-slate-500 hover:bg-slate-200 border border-transparent'}`}
+                      type="button"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-2">
+                <button 
+                  onClick={() => { setEditingCardId(null); setEditFront(''); setEditBack(''); setInlineStars(1); }} 
+                  className="px-4 py-2 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg text-sm font-semibold transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleAddInlineCard} 
+                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded-lg text-sm font-bold transition-colors shadow-sm"
+                >
+                  <Plus size={16} /> Añadir Tarjeta
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+
       </div>
     </div>
   );
