@@ -6,7 +6,6 @@ import { parseTextsFromCSV } from '../utils/csvParser';
 export default function Home() {
   const { texts, saveText, updateText, navigate, startStudySession } = useAppStore();
   const [showAll, setShowAll] = useState(false);
-  const [selectedStars, setSelectedStars] = useState([1, 2, 3]);
   const [editingTextId, setEditingTextId] = useState(null);
   const [editTitleValue, setEditTitleValue] = useState('');
   const fileInputRef = useRef(null);
@@ -57,33 +56,7 @@ export default function Home() {
     setEditingTextId(null);
   };
 
-  const handleStartGlobalStudy = () => {
-    // Extract all cards from all texts that match the star filters
-    const cardsToStudy = [];
-    texts.forEach(text => {
-      text.cards.forEach(card => {
-        const cardStars = card.stars || 1;
-        if (selectedStars.includes(cardStars)) {
-          cardsToStudy.push({ ...card, textTitle: text.title });
-        }
-      });
-    });
 
-    if (cardsToStudy.length > 0) {
-      startStudySession(cardsToStudy);
-    } else {
-      alert("No hay tarjetas que coincidan con los filtros de estrellas seleccionados.");
-    }
-  };
-
-  const toggleStar = (s) => {
-    if (selectedStars.includes(s)) {
-      if (selectedStars.length === 1) return; // Prevent unselecting the last one
-      setSelectedStars(selectedStars.filter(star => star !== s));
-    } else {
-      setSelectedStars([...selectedStars, s]);
-    }
-  };
 
   return (
     <div className="space-y-8">
@@ -125,35 +98,6 @@ export default function Home() {
         </div>
       </div>
 
-      {/* ESTUDIO GLOBAL */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
-        <h3 className="text-lg font-semibold mb-2 flex items-center gap-2">
-          <Play size={20} className="text-primary-600" />
-          Estudio Global Rápido
-        </h3>
-        <p className="text-slate-600 mb-5 text-sm">
-          Extrae todas las tarjetas de la biblioteca que coincidan con la clasificación seleccionada para estudiarlas de inmediato.
-        </p>
-        <div className="flex flex-wrap items-center gap-4">
-          <div className="flex bg-slate-100 p-1 rounded-lg">
-            {[1, 2, 3].map(s => (
-              <button 
-                key={s} 
-                onClick={() => toggleStar(s)}
-                className={`px-4 py-1.5 rounded-md text-sm font-bold transition-colors ${selectedStars.includes(s) ? 'bg-white shadow-sm text-primary-700' : 'text-slate-500 hover:bg-slate-200'}`}
-              >
-                {s} Estrella{s > 1 ? 's' : ''}
-              </button>
-            ))}
-          </div>
-          <button 
-            onClick={handleStartGlobalStudy}
-            className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
-          >
-            Iniciar estudio
-          </button>
-        </div>
-      </div>
 
       {/* LISTA DE TEXTOS */}
       <div>

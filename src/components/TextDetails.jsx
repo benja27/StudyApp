@@ -47,6 +47,27 @@ export default function TextDetails() {
     setHasChanges(true);
   };
 
+  const activeStars = [1, 2, 3].filter(s => {
+    const cardsOfStar = cards.filter(c => c.stars === s);
+    return cardsOfStar.length > 0 && cardsOfStar.every(c => c.isActive);
+  });
+
+  const toggleStarFilter = (s) => {
+    const cardsOfStar = cards.filter(c => c.stars === s);
+    if (cardsOfStar.length === 0) return;
+
+    const wasActive = activeStars.includes(s);
+    setCards(cards.map(c => c.stars === s ? { ...c, isActive: !wasActive } : c));
+    setHasChanges(true);
+  };
+
+  const handleDeleteCard = (id) => {
+    if (confirm("¿Estás seguro de eliminar esta tarjeta por completo? Esta acción requerirá guardar el archivo para completarse definitivamente.")) {
+      setCards(cards.filter(c => c.id !== id));
+      setHasChanges(true);
+    }
+  };
+
   const handleSelectAll = (active) => {
     setCards(cards.map(c => ({ ...c, isActive: active })));
     setHasChanges(true);
@@ -156,46 +177,82 @@ export default function TextDetails() {
       </div>
 
       <div className="bg-white p-4 sm:p-5 rounded-xl shadow-sm border border-slate-200 flex flex-col xl:flex-row justify-between xl:items-center gap-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <button 
-            onClick={() => handleSelectAll(true)}
-            className="text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg transition-colors"
-          >
-            Seleccionar todas
-          </button>
-          <button 
-            onClick={() => handleSelectAll(false)}
-            className="text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg transition-colors"
-          >
-            Ninguna
-          </button>
+        <div className="flex flex-col sm:flex-row flex-wrap items-start sm:items-center gap-3 sm:gap-4 w-full xl:w-auto">
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            <button 
+              onClick={() => handleSelectAll(true)}
+              className="text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg transition-colors"
+            >
+              Seleccionar todas
+            </button>
+            <button 
+              onClick={() => handleSelectAll(false)}
+              className="text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg transition-colors"
+            >
+              Ninguna
+            </button>
+          </div>
+
+          <div className="hidden sm:block w-px h-6 bg-slate-200 shrink-0"></div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <span className="text-sm font-bold text-slate-500 uppercase tracking-wider">Filtrar:</span>
+            <div className="flex bg-slate-100 p-1 rounded-lg gap-1 border border-slate-200">
+              {[1, 2, 3].map(s => {
+                const hasCards = cards.some(c => c.stars === s);
+                const isActive = activeStars.includes(s);
+                return (
+                  <button 
+                    key={s} 
+                    onClick={() => toggleStarFilter(s)}
+                    disabled={!hasCards}
+                    className={`px-3 py-1.5 rounded-md text-sm font-bold transition-all flex items-center gap-1 ${!hasCards ? 'opacity-50 cursor-not-allowed hidden sm:flex' : isActive ? 'bg-amber-100 text-amber-700 border border-amber-300 shadow-sm transform scale-105' : 'text-slate-500 hover:bg-slate-200 border border-transparent'}`}
+                    title={!hasCards ? `No hay tarjetas con ${s} estrella${s > 1 ? 's' : ''}` : `Seleccionar tarjetas de ${s} estrella${s > 1 ? 's' : ''}`}
+                  >
+                     {s} ★
+                  </button>
+                )
+              })}
+            </div>
+          </div>
         </div>
         
-        <div className="flex text-sm text-slate-500 bg-slate-50 px-4 py-2 rounded-lg border border-slate-100">
-          Activas: <span className="font-bold text-slate-800 ml-1">{cards.filter(c => c.isActive).length} / {cards.length}</span>
-        </div>
+        <div className="flex items-center justify-between xl:justify-end gap-4 w-full xl:w-auto mt-2 xl:mt-0">
+          <div className="flex text-sm text-slate-500 bg-slate-50 px-4 py-2 rounded-lg border border-slate-100 shrink-0">
+            Activas: <span className="font-bold text-slate-800 ml-1">{cards.filter(c => c.isActive).length} / {cards.length}</span>
+          </div>
 
-        {hasChanges && (
-          <button 
-            onClick={handleSave}
-            className="flex items-center justify-center gap-2 bg-primary-100 text-primary-700 hover:bg-primary-200 hover:text-primary-800 px-6 py-2 rounded-lg font-bold transition-colors w-full xl:w-auto mt-2 xl:mt-0"
-          >
-            <Save size={18} /> Guardar cambios
-          </button>
-        )}
+          {hasChanges && (
+            <button 
+              onClick={handleSave}
+              className="flex items-center justify-center gap-2 bg-primary-100 text-primary-700 hover:bg-primary-200 hover:text-primary-800 px-6 py-2 rounded-lg font-bold transition-colors shrink-0"
+            >
+              <Save size={18} /> Guardar cambios
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-3">
         {cards.map((card) => (
           <div key={card.id} className={`bg-white p-4 sm:p-5 rounded-xl border-2 transition-all flex flex-col sm:flex-row sm:items-center gap-4 group relative ${card.isActive ? 'border-primary-400 shadow-sm' : 'border-slate-200 opacity-70 hover:opacity-100'}`}>
             {editingCardId !== card.id && (
-              <button 
-                onClick={() => handleEditClick(card)}
-                className="absolute top-2 right-2 p-1.5 text-slate-400 hover:text-primary-600 bg-white rounded-full shadow-sm border border-slate-200 opacity-0 group-hover:opacity-100 transition-opacity z-10"
-                title="Editar contenido"
-              >
-                <Pencil size={14} />
-              </button>
+              <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button 
+                  onClick={() => handleEditClick(card)}
+                  className="p-1.5 text-slate-400 hover:text-primary-600 bg-white rounded-full shadow-sm border border-slate-200"
+                  title="Editar contenido"
+                >
+                  <Pencil size={14} />
+                </button>
+                <button 
+                  onClick={() => handleDeleteCard(card.id)}
+                  className="p-1.5 text-slate-400 hover:text-red-600 bg-white rounded-full shadow-sm border border-slate-200"
+                  title="Eliminar tarjeta"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             )}
             <button 
               onClick={() => handleToggleActive(card.id)}
