@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAppStore } from '../store/appStore';
-import { ArrowLeft, Plus, Trash2, Save } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, Save, FileText, X } from 'lucide-react';
+import { parseTextsFromCSV } from '../utils/csvParser';
 
 export default function TextCreator() {
   const { saveText, texts, navigate } = useAppStore();
@@ -8,6 +9,43 @@ export default function TextCreator() {
   const [cards, setCards] = useState([
     { id: crypto.randomUUID(), front: '', back: '', isActive: false, stars: 1 }
   ]);
+  const [showCSVPaste, setShowCSVPaste] = useState(false);
+  const [pastedCSV, setPastedCSV] = useState('');
+
+  const handleProcessCSV = () => {
+    if (!pastedCSV.trim()) return;
+    const lines = pastedCSV.trim().split(/\r?\n/).filter(l => l.trim() !== '');
+    if (lines.length === 0) return;
+
+    let possibleTitle = '';
+    let csvDataToParse = lines;
+
+    if (lines[0].startsWith('#')) {
+      possibleTitle = lines[0].replace(/^#/, '').trim();
+      csvDataToParse = lines.slice(1);
+    }
+    
+    const parsed = parseTextsFromCSV(csvDataToParse.join('\n'));
+    if (parsed.length > 0) {
+      if (possibleTitle) setTitle(possibleTitle);
+      
+      const newCards = [];
+      parsed.forEach(t => {
+         t.cards.forEach(c => newCards.push({...c, id: crypto.randomUUID()}));
+      });
+      
+      if (newCards.length > 0) {
+        setCards(newCards);
+        alert('Tarjetas importadas correctamente en el editor.');
+        setShowCSVPaste(false);
+        setPastedCSV('');
+      } else {
+        alert('No se detectaron tarjetas válidas en el formato CSV.');
+      }
+    } else {
+        alert('No se detectaron textos válidos.');
+    }
+  };
 
   const addCard = () => {
     setCards([...cards, { id: crypto.randomUUID(), front: '', back: '', isActive: false, stars: 1 }]);
@@ -72,8 +110,39 @@ export default function TextCreator() {
         >
           <ArrowLeft size={24} />
         </button>
-        <h2 className="text-2xl font-bold">Crear texto nuevo</h2>
+        <h2 className="text-2xl font-bold flex-1">Crear texto nuevo</h2>
+        <button 
+          onClick={() => setShowCSVPaste(!showCSVPaste)}
+          className="flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-sm font-semibold transition-colors"
+        >
+          <FileText size={18} /> Pegar desde CSV
+        </button>
       </div>
+
+      {showCSVPaste && (
+        <div className="bg-white p-5 rounded-xl shadow-sm border-2 border-primary-200 animate-in fade-in slide-in-from-top-4">
+          <div className="flex items-center justify-between mb-2">
+            <label className="block text-sm font-bold text-slate-700 uppercase tracking-wide">Pegar Formato CSV</label>
+            <button onClick={() => setShowCSVPaste(false)} className="text-slate-400 hover:text-red-500"><X size={18}/></button>
+          </div>
+          <p className="text-xs text-slate-500 mb-3 font-medium">Puedes usar la primera línea con <strong>#Titulo del Texto</strong>. Ej:<br/>
+          <span className="font-mono bg-slate-100 px-2 py-1 rounded block mt-1">#titulo<br/>title,spanish,english,stars<br/>Bienvenida AMX,"parte en spanish","parte en ingles",2</span></p>
+          <textarea 
+            value={pastedCSV}
+            onChange={e => setPastedCSV(e.target.value)}
+            className="w-full h-40 bg-slate-50 px-4 py-3 rounded-lg border border-slate-300 focus:ring-2 focus:ring-primary-500 transition-all font-mono text-sm resize-y"
+            placeholder="Pega aquí el contenido CSV con el formato indicado..."
+          ></textarea>
+          <div className="flex justify-end mt-3">
+            <button 
+              onClick={handleProcessCSV}
+              className="px-5 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg text-sm font-bold shadow-sm transition-colors"
+            >
+              Procesar CSV
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200">
         <label className="block text-sm font-semibold text-slate-700 mb-2">Título del Texto</label>
