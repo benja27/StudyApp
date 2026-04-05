@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useAppStore } from '../store/appStore';
-import { Plus, BookOpen, Play, Upload, FileText, Pencil, Check, X, Trash2, CheckSquare, Square } from 'lucide-react';
+import { Plus, BookOpen, Play, Upload, FileText, Pencil, Check, X, Trash2, CheckSquare, Square, FileCode2 } from 'lucide-react';
 import { parseTextsFromCSV } from '../utils/csvParser';
 
 export default function Home() {
@@ -117,7 +117,14 @@ export default function Home() {
             className="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm flex-1 sm:flex-none"
           >
             <FileText size={20} />
-            <span className="hidden sm:inline">Generar CSV</span>
+            <span className="hidden sm:inline">CSV</span>
+          </button>
+          <button 
+            onClick={() => navigate('IMPORT_JSON')}
+            className="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-lg font-medium transition-colors shadow-sm flex-1 sm:flex-none"
+          >
+            <FileCode2 size={20} />
+            <span className="hidden sm:inline">JSON</span>
           </button>
           <button 
             onClick={() => navigate('CREATE_TEXT')}

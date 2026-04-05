@@ -5,6 +5,7 @@ import TextCreator from './components/TextCreator';
 import TextDetails from './components/TextDetails';
 import StudySession from './components/StudySession';
 import CsvGenerator from './components/CsvGenerator';
+import JsonImporter from './components/JsonImporter';
 import EasterEgg from './components/EasterEgg';
 import Login from './components/Login';
 import { auth } from './lib/firebase';
@@ -96,6 +97,7 @@ function App() {
         {activeScreen === 'TEXT_DETAILS' && <TextDetails />}
         {activeScreen === 'STUDY_SESSION' && <StudySession />}
         {activeScreen === 'GENERATE_CSV' && <CsvGenerator />}
+        {activeScreen === 'IMPORT_JSON' && <JsonImporter />}
       </main>
       
       {/* Full screen routes that ignore global layout padding */}
