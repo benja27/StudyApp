@@ -4,7 +4,7 @@ import { ArrowLeft, Plus, Trash2, Save, FileText, X } from 'lucide-react';
 import { parseTextsFromCSV } from '../utils/csvParser';
 
 export default function TextCreator() {
-  const { saveText, texts, navigate } = useAppStore();
+  const { saveText, texts, navigate, activeCollectionId } = useAppStore();
   const [title, setTitle] = useState('');
   const [cards, setCards] = useState([
     { id: crypto.randomUUID(), front: '', back: '', isActive: false, stars: 1 }
@@ -94,6 +94,7 @@ export default function TextCreator() {
     const newText = {
       id: trimmedTitle, // "usando su título como identificador"
       title: trimmedTitle,
+      collectionId: activeCollectionId,
       cards: validCards
     };
 

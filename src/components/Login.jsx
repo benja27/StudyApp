@@ -22,7 +22,7 @@ export default function Login() {
           <span className="text-white font-bold text-3xl leading-none">P</span>
         </div>
         
-        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-2">Preparador de Textos</h1>
+        <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-2">Study App</h1>
         <p className="text-slate-500 mb-8 font-medium">Inicia sesión para acceder a tu biblioteca personal de estudio.</p>
         
         <button 

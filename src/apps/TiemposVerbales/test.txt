@@ -1,0 +1,6 @@
+¡Hola! 
+
+Esta es una demostración en vivo del sistema de lectura de archivos estáticos. 
+La aplicación de "Tiempos Verbales" ha extraído este bloque de texto correctamente desde "test.txt".
+
+Estructura modular exitosa.

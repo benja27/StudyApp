@@ -1,15 +1,69 @@
 @import "tailwindcss";
 
 @theme {
-  --color-primary-50: #f0fdf4;
-  --color-primary-100: #dcfce7;
-  --color-primary-500: #22c55e;
-  --color-primary-600: #16a34a;
-  --color-primary-700: #15803d;
+  --color-primary-50: #eff6ff;
+  --color-primary-100: #dbeafe;
+  --color-primary-200: #bfdbfe;
+  --color-primary-300: #93c5fd;
+  --color-primary-400: #60a5fa;
+  --color-primary-500: #3b82f6; 
+  --color-primary-600: #2563eb; 
+  --color-primary-700: #1d4ed8; 
 }
 
 body {
-  background-color: #f8fafc;
-  color: #0f172a;
+  background-color: #020617 !important; /* Base negra para el cielo nocturno */
+  color: #f1f5f9 !important;
   font-family: system-ui, -apple-system, sans-serif;
+  color-scheme: dark;
 }
+
+/* =========================================
+   DARK MODE OVERRIDES (NIGHT SKY THEME) 
+   ========================================= */
+
+/* Transiciones globales */
+* {
+  transition-property: background-color, border-color, color;
+  transition-duration: 200ms;
+}
+
+/* Contenedores y Fondos Principales */
+.bg-white { background-color: #0f172a !important; } /* Tarjetas e interfaces (Slate 900) */
+.bg-slate-50 { background-color: #020617 !important; } /* Body alterno (Slate 950) */
+.bg-slate-100 { background-color: #1e293b !important; } /* Cajas tenues (Slate 800) */
+.bg-slate-200 { background-color: #334155 !important; }
+
+/* Textos adaptados para fondos oscuros */
+.text-slate-900 { color: #ffffff !important; } /* Blanco puro */
+.text-slate-800 { color: #f8fafc !important; }
+.text-slate-700 { color: #e2e8f0 !important; }
+.text-slate-600 { color: #cbd5e1 !important; }
+.text-slate-500 { color: #94a3b8 !important; }
+.text-slate-400 { color: #64748b !important; }
+
+/* Bordes y Divisiones */
+.border-slate-100, .border-slate-200 { border-color: #1e293b !important; border-style: solid; }
+.border-slate-300 { border-color: #334155 !important; border-style: solid; }
+.border-slate-400 { border-color: #475569 !important; }
+
+/* Efectos al pasar el mouse (Hovers) en fondos */
+.hover\:bg-slate-50:hover { background-color: #0f172a !important; }
+.hover\:bg-slate-100:hover { background-color: #1e293b !important; }
+.hover\:bg-slate-200:hover { background-color: #334155 !important; }
+
+/* Efectos al pasar el mouse (Hovers) en textos */
+.hover\:text-slate-800:hover { color: #ffffff !important; }
+
+/* Inversión y adaptación de los azules principales para que sigan viéndose bien */
+.bg-primary-50 { background-color: #172554 !important; color: #bfdbfe; }
+.text-primary-700 { color: #60a5fa !important; }
+.text-primary-600 { color: #60a5fa !important; }
+.bg-primary-100 { background-color: #1e3a8a !important; }
+
+.border-primary-100 { border-color: #1e3a8a !important; }
+.border-primary-200 { border-color: #2563eb !important; }
+.border-primary-300 { border-color: #3b82f6 !important; }
+
+.hover\:bg-primary-50:hover { background-color: #1e3a8a !important; }
+.hover\:bg-primary-100:hover { background-color: #1d4ed8 !important; }

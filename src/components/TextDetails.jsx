@@ -1,9 +1,9 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useAppStore } from '../store/appStore';
 import { ArrowLeft, Play, Save, CheckSquare, Square, Trash2, Pencil, X, Download, Plus } from 'lucide-react';
 
 export default function TextDetails() {
-  const { texts, activeTextId, updateText, deleteText, navigate, startStudySession } = useAppStore();
+  const { texts, activeTextId, updateText, deleteText, navigate, startStudySession, isAdmin } = useAppStore();
   const text = texts.find(t => t.id === activeTextId);
 
   // Mantenemos una copia local para la edición
@@ -12,6 +12,7 @@ export default function TextDetails() {
   
   // Estado para la edición en línea de tarjetas
   const [editingCardId, setEditingCardId] = useState(null);
+  const [insertIndex, setInsertIndex] = useState(null);
   const [editFront, setEditFront] = useState('');
   const [editBack, setEditBack] = useState('');
   const [inlineStars, setInlineStars] = useState(1);
@@ -96,24 +97,18 @@ export default function TextDetails() {
     }
   };
 
-  const escapeCSV = (str) => {
-    if (!str) return '';
-    if (str.includes(',') || str.includes('"') || str.includes('\n')) {
-      return `"${str.replace(/"/g, '""')}"`;
-    }
-    return str;
-  };
-
-  const handleDownloadCSV = () => {
-    let csvOutput = "title,spanish,english,stars\n";
+  const handleDownloadTxt = () => {
+    let txtOutput = `@${text.title}\n`;
     cards.forEach(card => {
-      csvOutput += `${escapeCSV(text.title)},${escapeCSV(card.front)},${escapeCSV(card.back)},${card.stars || 1}\n`;
+      const safeFront = card.front.replace(/\n/g, ' ').trim();
+      const safeBack = card.back.replace(/\n/g, ' ').trim();
+      txtOutput += `${safeFront} ; ${safeBack}\n`;
     });
-    const blob = new Blob([csvOutput], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob([txtOutput], { type: 'text/plain;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${text.title}.csv`;
+    link.download = `${text.title}.txt`;
     link.click();
   };
 
@@ -129,11 +124,99 @@ export default function TextDetails() {
       isActive: true, // starts active by default
       stars: inlineStars
     };
-    setCards([...cards, newCard]);
+    const updatedCards = [...cards];
+    const targetIdx = insertIndex !== null ? insertIndex : updatedCards.length;
+    updatedCards.splice(targetIdx, 0, newCard);
+    
+    setCards(updatedCards);
     setEditFront('');
     setEditBack('');
     setInlineStars(1);
+    setInsertIndex(null);
     setHasChanges(true);
+  };
+
+  const renderGap = (index) => {
+    if (insertIndex === index) {
+      return (
+        <div key={`gap-${index}`} className="bg-slate-50 p-4 sm:p-5 rounded-xl border-2 border-dashed border-primary-300 flex flex-col gap-4 w-full shadow-inner relative mt-1 mb-1">
+          <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Añadir nueva tarjeta aquí</h4>
+          <div className="flex-1 grid md:grid-cols-2 gap-4 w-full">
+            <div className="flex flex-col">
+              <span className="text-[10px] text-primary-500 font-bold uppercase tracking-wider block mb-1">Español</span>
+              <textarea 
+                value={editFront} 
+                onChange={e => setEditFront(e.target.value)} 
+                autoFocus
+                placeholder="Escribe el lado en español..."
+                className="w-full min-h-[80px] text-slate-800 text-sm md:text-base font-medium bg-white border border-slate-200 rounded-lg p-3 outline-none focus:ring-2 focus:ring-primary-500 transition-all resize-none" 
+              />
+            </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] text-primary-500 font-bold uppercase tracking-wider block mb-1">Inglés</span>
+              <textarea 
+                value={editBack} 
+                onChange={e => setEditBack(e.target.value)} 
+                placeholder="Escribe el lado en inglés..."
+                className="w-full min-h-[80px] text-slate-800 text-sm md:text-base font-medium bg-white border border-slate-200 rounded-lg p-3 outline-none focus:ring-2 focus:ring-primary-500 transition-all resize-none" 
+              />
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mt-2">
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Dificultad de la tarjeta:</span>
+              <div className="flex bg-slate-100 p-1 rounded-lg gap-1 border border-slate-200">
+                {[1, 2, 3].map(s => (
+                  <button
+                    key={s}
+                    onClick={() => setInlineStars(s)}
+                    className={`px-3 py-1 rounded-md text-sm font-bold transition-all ${inlineStars === s ? 'bg-amber-100 text-amber-700 shadow-sm border border-amber-300 transform scale-105' : 'text-slate-500 hover:bg-slate-200 border border-transparent'}`}
+                    type="button"
+                  >
+                    {s}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button 
+                onClick={() => { setInsertIndex(null); setEditFront(''); setEditBack(''); setInlineStars(1); }} 
+                className="px-4 py-2 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg text-sm font-semibold transition-colors"
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={handleAddInlineCard} 
+                className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded-lg text-sm font-bold transition-colors shadow-sm"
+              >
+                <Plus size={16} /> Añadir Tarjeta
+              </button>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div key={`gap-${index}`} className="flex items-center justify-center -my-1 z-10 w-full group">
+        <div className="h-px bg-slate-200 flex-1 transition-colors group-hover:bg-primary-200"></div>
+        <button 
+          onClick={() => {
+            if (insertIndex !== null) return;
+            setInsertIndex(index);
+            setEditFront('');
+            setEditBack('');
+            setInlineStars(1);
+            setEditingCardId(null);
+          }}
+          className="bg-white border-2 border-slate-200 text-slate-400 hover:bg-primary-50 hover:border-primary-400 hover:text-primary-600 w-8 h-8 rounded-full flex items-center justify-center transition-all shadow-sm mx-3 relative outline-none focus:ring-4 focus:ring-primary-100 transform group-hover:scale-110"
+          title="Añadir tarjeta aquí"
+        >
+          <Plus size={18} strokeWidth={2.5} />
+        </button>
+        <div className="h-px bg-slate-200 flex-1 transition-colors group-hover:bg-primary-200"></div>
+      </div>
+    );
   };
 
   return (
@@ -153,19 +236,21 @@ export default function TextDetails() {
         </div>
         <div className="flex items-center gap-2">
           <button 
-            onClick={handleDownloadCSV}
+            onClick={handleDownloadTxt}
             className="flex items-center gap-2 px-3 py-2 text-primary-600 bg-primary-50 hover:bg-primary-100 rounded-lg text-sm font-semibold transition-colors shadow-sm whitespace-nowrap"
-            title="Exportar tarjetas a CSV"
+            title="Descargar texto en formato plano"
           >
-            <Download size={18} className="hidden sm:inline" /> CSV
+            <Download size={18} className="hidden sm:inline" /> Descargar texto
           </button>
-          <button 
-            onClick={handleDeleteText}
-            className="p-2.5 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border border-transparent hover:border-red-100"
-            title="Eliminar texto por completo"
-          >
-            <Trash2 size={20} />
-          </button>
+          {isAdmin && (
+            <button 
+              onClick={handleDeleteText}
+              className="p-2.5 text-red-500 hover:bg-red-50 hover:text-red-600 rounded-lg transition-colors border border-transparent hover:border-red-100"
+              title="Eliminar texto por completo"
+            >
+              <Trash2 size={20} />
+            </button>
+          )}
           
           <button 
             onClick={handleStartStudy}
@@ -222,7 +307,7 @@ export default function TextDetails() {
             Activas: <span className="font-bold text-slate-800 ml-1">{cards.filter(c => c.isActive).length} / {cards.length}</span>
           </div>
 
-          {hasChanges && (
+          {isAdmin && hasChanges && (
             <button 
               onClick={handleSave}
               className="flex items-center justify-center gap-2 bg-primary-100 text-primary-700 hover:bg-primary-200 hover:text-primary-800 px-6 py-2 rounded-lg font-bold transition-colors shrink-0"
@@ -233,159 +318,96 @@ export default function TextDetails() {
         </div>
       </div>
 
-      <div className="grid gap-3">
-        {cards.map((card) => (
-          <div key={card.id} className={`bg-white p-4 sm:p-5 rounded-xl border-2 transition-all flex flex-col sm:flex-row sm:items-center gap-4 group relative ${card.isActive ? 'border-primary-400 shadow-sm' : 'border-slate-200 opacity-70 hover:opacity-100'}`}>
-            {editingCardId !== card.id && (
-              <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
-                <button 
-                  onClick={() => handleEditClick(card)}
-                  className="p-1.5 text-slate-400 hover:text-primary-600 bg-white rounded-full shadow-sm border border-slate-200"
-                  title="Editar contenido"
-                >
-                  <Pencil size={14} />
-                </button>
-                <button 
-                  onClick={() => handleDeleteCard(card.id)}
-                  className="p-1.5 text-slate-400 hover:text-red-600 bg-white rounded-full shadow-sm border border-slate-200"
-                  title="Eliminar tarjeta"
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            )}
-            <button 
-              onClick={() => handleToggleActive(card.id)}
-              className="flex-shrink-0 text-slate-400 hover:text-primary-600 transition-colors self-start sm:self-auto mt-1 sm:mt-0"
-              title={card.isActive ? 'Desactivar de la lista' : 'Agregar a la lista'}
-            >
-              {card.isActive ? <CheckSquare size={28} className="text-primary-500" /> : <Square size={28} />}
-            </button>
-            
-            <div className="flex-1 grid md:grid-cols-2 gap-4 w-full">
-              {editingCardId === card.id ? (
-                <>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-primary-500 font-bold uppercase tracking-wider block mb-1">Editando Español</span>
-                    <textarea 
-                      value={editFront} 
-                      onChange={e => setEditFront(e.target.value)} 
-                      className="w-full h-full min-h-[80px] text-slate-800 text-sm md:text-base font-medium bg-slate-50 border border-primary-200 rounded-lg p-3 outline-none focus:ring-2 focus:ring-primary-500 transition-all resize-none" 
-                    />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[10px] text-primary-500 font-bold uppercase tracking-wider block mb-1">Editando Inglés</span>
-                    <textarea 
-                      value={editBack} 
-                      onChange={e => setEditBack(e.target.value)} 
-                      className="w-full text-slate-800 text-sm md:text-base min-h-[80px] bg-slate-50 border border-primary-200 rounded-lg p-3 outline-none focus:ring-2 focus:ring-primary-500 transition-all resize-none mb-2" 
-                    />
-                    <div className="flex items-center justify-end gap-2 mt-auto">
-                      <button onClick={() => setEditingCardId(null)} className="flex items-center gap-1 px-3 py-1.5 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg text-sm font-medium transition-colors"><X size={14}/> Cancelar</button>
-                      <button onClick={() => handleSaveEdit(card.id)} className="flex items-center gap-1 px-3 py-1.5 bg-primary-600 text-white hover:bg-primary-700 rounded-lg text-sm font-medium transition-colors"><Save size={14}/> Guardar</button>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Español</span>
-                    <p className="text-slate-800 text-sm md:text-base font-medium whitespace-pre-wrap">{card.front}</p>
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Inglés</span>
-                    <p className="text-slate-800 leading-snug text-sm md:text-base whitespace-pre-wrap">{card.back}</p>
-                  </div>
-                </>
-              )}
-            </div>
-
-            <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 sm:gap-1 mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-t-0 sm:border-l border-slate-100 sm:pl-4 min-w-[100px]">
-              <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${card.isActive ? 'bg-primary-100 text-primary-700' : 'bg-slate-100 text-slate-500'}`}>
-                {card.isActive ? 'En lista' : 'No en lista'}
-              </span>
-              <div className="flex items-center gap-1 mt-1 bg-slate-50 p-1 rounded-full border border-slate-100">
-                {[1, 2, 3].map(s => (
-                  <button
-                    key={s}
-                    onClick={() => handeSetStars(card.id, s)}
-                    className={`w-6 h-6 rounded-full text-xs font-bold transition-colors flex items-center justify-center ${card.stars === s ? 'bg-amber-100 text-amber-700 border border-amber-300 shadow-sm' : 'text-slate-400 hover:bg-slate-200 hover:text-slate-600'}`}
-                    title={`${s} estrella${s > 1 ? 's' : ''}`}
+      <div className="flex flex-col gap-3">
+        {isAdmin && renderGap(0)}
+        {cards.map((card, index) => (
+          <React.Fragment key={card.id}>
+            <div className={`bg-white p-4 sm:p-5 rounded-xl border-2 transition-all flex flex-col sm:flex-row sm:items-center gap-4 group relative ${card.isActive ? 'border-primary-400 shadow-sm' : 'border-slate-200 opacity-70 hover:opacity-100'}`}>
+              {isAdmin && editingCardId !== card.id && (
+                <div className="absolute top-2 right-2 flex gap-1 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button 
+                    onClick={() => handleEditClick(card)}
+                    className="p-1.5 text-slate-400 hover:text-primary-600 bg-white rounded-full shadow-sm border border-slate-200"
+                    title="Editar contenido"
                   >
-                    {s}
+                    <Pencil size={14} />
                   </button>
-                ))}
+                  <button 
+                    onClick={() => handleDeleteCard(card.id)}
+                    className="p-1.5 text-slate-400 hover:text-red-600 bg-white rounded-full shadow-sm border border-slate-200"
+                    title="Eliminar tarjeta"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </div>
+              )}
+              <button 
+                onClick={() => handleToggleActive(card.id)}
+                className="flex-shrink-0 text-slate-400 hover:text-primary-600 transition-colors self-start sm:self-auto mt-1 sm:mt-0"
+                title={card.isActive ? 'Desactivar de la lista' : 'Agregar a la lista'}
+              >
+                {card.isActive ? <CheckSquare size={28} className="text-primary-500" /> : <Square size={28} />}
+              </button>
+              
+              <div className="flex-1 grid md:grid-cols-2 gap-4 w-full">
+                {editingCardId === card.id ? (
+                  <>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-primary-500 font-bold uppercase tracking-wider block mb-1">Editando Español</span>
+                      <textarea 
+                        value={editFront} 
+                        onChange={e => setEditFront(e.target.value)} 
+                        className="w-full h-full min-h-[80px] text-slate-800 text-sm md:text-base font-medium bg-slate-50 border border-primary-200 rounded-lg p-3 outline-none focus:ring-2 focus:ring-primary-500 transition-all resize-none" 
+                      />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-[10px] text-primary-500 font-bold uppercase tracking-wider block mb-1">Editando Inglés</span>
+                      <textarea 
+                        value={editBack} 
+                        onChange={e => setEditBack(e.target.value)} 
+                        className="w-full text-slate-800 text-sm md:text-base min-h-[80px] bg-slate-50 border border-primary-200 rounded-lg p-3 outline-none focus:ring-2 focus:ring-primary-500 transition-all resize-none mb-2" 
+                      />
+                      <div className="flex items-center justify-end gap-2 mt-auto">
+                        <button onClick={() => setEditingCardId(null)} className="flex items-center gap-1 px-3 py-1.5 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg text-sm font-medium transition-colors"><X size={14}/> Cancelar</button>
+                        <button onClick={() => handleSaveEdit(card.id)} className="flex items-center gap-1 px-3 py-1.5 bg-primary-600 text-white hover:bg-primary-700 rounded-lg text-sm font-medium transition-colors"><Save size={14}/> Guardar</button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Español</span>
+                      <p className="text-slate-800 text-sm md:text-base font-medium whitespace-pre-wrap">{card.front}</p>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block mb-1">Inglés</span>
+                      <p className="text-slate-800 leading-snug text-sm md:text-base whitespace-pre-wrap">{card.back}</p>
+                    </div>
+                  </>
+                )}
               </div>
-            </div>
-          </div>
-        ))}
-        
-        {/* INLINE CARD CREATION FORM */}
-        <div className="bg-slate-50 p-4 sm:p-5 rounded-xl border-2 border-dashed border-slate-300 mt-4 flex flex-col gap-4">
-          <h4 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Añadir nueva tarjeta rápidamente</h4>
-          <div className="flex-1 grid md:grid-cols-2 gap-4 w-full">
-            <div className="flex flex-col">
-              <span className="text-[10px] text-primary-500 font-bold uppercase tracking-wider block mb-1">Español</span>
-              <textarea 
-                value={editingCardId === 'NEW' ? editFront : ''} 
-                onChange={e => {
-                  if(editingCardId !== 'NEW') { setEditingCardId('NEW'); setEditBack(''); setInlineStars(1); }
-                  setEditFront(e.target.value);
-                }} 
-                onClick={() => { if(editingCardId !== 'NEW') { setEditingCardId('NEW'); setEditFront(''); setEditBack(''); setInlineStars(1); } }}
-                placeholder="Escribe el lado en español..."
-                className="w-full min-h-[80px] text-slate-800 text-sm md:text-base font-medium bg-white border border-slate-200 rounded-lg p-3 outline-none focus:ring-2 focus:ring-primary-500 transition-all resize-none" 
-              />
-            </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] text-primary-500 font-bold uppercase tracking-wider block mb-1">Inglés</span>
-              <textarea 
-                value={editingCardId === 'NEW' ? editBack : ''} 
-                onChange={e => {
-                  if(editingCardId !== 'NEW') { setEditingCardId('NEW'); setEditFront(''); setInlineStars(1); }
-                  setEditBack(e.target.value);
-                }} 
-                onClick={() => { if(editingCardId !== 'NEW') { setEditingCardId('NEW'); setEditFront(''); setEditBack(''); setInlineStars(1); } }}
-                placeholder="Escribe el lado en inglés..."
-                className="w-full min-h-[80px] text-slate-800 text-sm md:text-base font-medium bg-white border border-slate-200 rounded-lg p-3 outline-none focus:ring-2 focus:ring-primary-500 transition-all resize-none" 
-              />
-            </div>
-          </div>
-          {editingCardId === 'NEW' && (
-            <>
-              <div className="flex items-center gap-3 pt-2">
-                <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">Dificultad de la tarjeta:</span>
-                <div className="flex bg-slate-100 p-1 rounded-lg gap-1 border border-slate-200">
+
+              <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-center gap-2 sm:gap-1 mt-4 sm:mt-0 pt-4 sm:pt-0 border-t sm:border-t-0 sm:border-l border-slate-100 sm:pl-4 min-w-[100px]">
+                <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${card.isActive ? 'bg-primary-100 text-primary-700' : 'bg-slate-100 text-slate-500'}`}>
+                  {card.isActive ? 'En lista' : 'No en lista'}
+                </span>
+                <div className="flex items-center gap-1 mt-1 bg-slate-50 p-1 rounded-full border border-slate-100">
                   {[1, 2, 3].map(s => (
                     <button
                       key={s}
-                      onClick={() => setInlineStars(s)}
-                      className={`px-3 py-1 rounded-md text-sm font-bold transition-all ${inlineStars === s ? 'bg-amber-100 text-amber-700 shadow-sm border border-amber-300 transform scale-105' : 'text-slate-500 hover:bg-slate-200 border border-transparent'}`}
-                      type="button"
+                      onClick={() => handeSetStars(card.id, s)}
+                      className={`w-6 h-6 rounded-full text-xs font-bold transition-colors flex items-center justify-center ${card.stars === s ? 'bg-amber-100 text-amber-700 border border-amber-300 shadow-sm' : 'text-slate-400 hover:bg-slate-200 hover:text-slate-600'}`}
+                      title={`${s} estrella${s > 1 ? 's' : ''}`}
                     >
                       {s}
                     </button>
                   ))}
                 </div>
               </div>
-              <div className="flex justify-end gap-2 mt-2">
-                <button 
-                  onClick={() => { setEditingCardId(null); setEditFront(''); setEditBack(''); setInlineStars(1); }} 
-                  className="px-4 py-2 bg-slate-200 text-slate-700 hover:bg-slate-300 rounded-lg text-sm font-semibold transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button 
-                  onClick={handleAddInlineCard} 
-                  className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white hover:bg-primary-700 rounded-lg text-sm font-bold transition-colors shadow-sm"
-                >
-                  <Plus size={16} /> Añadir Tarjeta
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-
+            </div>
+            {isAdmin && renderGap(index + 1)}
+          </React.Fragment>
+        ))}
       </div>
     </div>
   );

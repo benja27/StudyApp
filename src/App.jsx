@@ -8,12 +8,13 @@ import CsvGenerator from './components/CsvGenerator';
 import JsonImporter from './components/JsonImporter';
 import EasterEgg from './components/EasterEgg';
 import Login from './components/Login';
+import AppLoader from './apps/AppLoader';
 import { auth } from './lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { LogOut } from 'lucide-react';
 
 function App() {
-  const { user, authInitialLoad, setUser, loadData, isLoaded, activeScreen } = useAppStore();
+  const { user, isAdmin, authInitialLoad, setUser, loadData, isLoaded, activeScreen } = useAppStore();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -65,7 +66,7 @@ function App() {
             <div className="bg-primary-600 w-8 h-8 rounded-lg flex items-center justify-center shadow-sm">
               <span className="text-white font-bold text-lg leading-none">P</span>
             </div>
-            <h1 className="text-xl font-bold text-slate-800 tracking-tight hidden sm:block">Preparador de Textos</h1>
+            <h1 className="text-xl font-bold text-slate-800 tracking-tight hidden sm:block">Study App</h1>
           </div>
           
           <div className="flex items-center gap-3">
@@ -76,8 +77,13 @@ function App() {
                   className="w-8 h-8 rounded-full border border-slate-300" 
                   referrerPolicy="no-referrer"
                 />
-                <div className="hidden sm:block text-xs font-bold text-slate-700 max-w-[120px] truncate">
-                  {user.displayName || 'Usuario'}
+                <div className="hidden sm:flex flex-col">
+                  <div className="text-xs font-bold text-slate-700 max-w-[120px] truncate leading-none">
+                    {user.displayName || 'Usuario'}
+                  </div>
+                  <div className={`text-[9px] font-bold mt-1 inline-flex self-start px-1.5 py-0.5 rounded-sm uppercase tracking-wider ${isAdmin ? 'bg-amber-100 text-amber-700' : 'bg-blue-100 text-blue-700'}`}>
+                    {isAdmin ? 'Admin' : 'Estudiante'}
+                  </div>
                 </div>
                 <button 
                   onClick={() => auth.signOut()}
@@ -93,6 +99,7 @@ function App() {
       
       <main className="max-w-4xl mx-auto p-4 py-8">
         {activeScreen === 'HOME' && <Home />}
+        {activeScreen === 'APP_VIEW' && <AppLoader />}
         {activeScreen === 'CREATE_TEXT' && <TextCreator />}
         {activeScreen === 'TEXT_DETAILS' && <TextDetails />}
         {activeScreen === 'STUDY_SESSION' && <StudySession />}

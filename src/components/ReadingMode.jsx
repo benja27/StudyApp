@@ -73,7 +73,15 @@ export default function ReadingMode({ list, pauseSeconds, speed, selectedVoice, 
 
     // 2. Pausa
     setStep('PAUSE');
-    await pausableDelay(pauseSeconds * 1000, cycleId);
+    
+    // Calcular si la frase en español es de una sola palabra
+    const cleanSpanish = card.front.replace(/[^\w\sáéíóúÁÉÍÓÚñÑüÜ]/g, '').trim();
+    const spanishWords = cleanSpanish ? cleanSpanish.split(/\s+/) : [];
+    const isSingleWord = spanishWords.length === 1;
+    
+    const actualPauseMs = isSingleWord ? 1500 : (pauseSeconds * 1000);
+    
+    await pausableDelay(actualPauseMs, cycleId);
     if (cycleId !== cycleIdRef.current) return;
 
     // 3. Reproducir Respuesta Base

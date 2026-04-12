@@ -1,0 +1,7 @@
+
+yo soy doctor; I am doctor
+tu eres doctor; you are doctor
+el es doctor; he is doctor
+ella es doctor; she is doctor
+nosotros somos doctores; we are doctors
+ellos son doctores; they are doctors
