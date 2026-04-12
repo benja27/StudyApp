@@ -1,0 +1,56 @@
+{
+  "pronombres": {
+    "personales": [
+      {"spa": "yo", "eng": "I"},
+      {"spa": "tú", "eng": "you"},
+      {"spa": "él", "eng": "he"},
+      {"spa": "nosotros", "eng": "we"}
+    ],
+    "indefinidos": [
+      {"spa": "alguien", "eng": "someone"},
+      {"spa": "nadie", "eng": "nobody"},
+      {"spa": "todos", "eng": "everyone"}
+    ]
+  },
+  "verbos": {
+    "regulares": [
+      {"spa": "caminar", "eng": "walk"},
+      {"spa": "saltar", "eng": "jump"},
+      {"spa": "jugar", "eng": "play"}
+    ],
+    "irregulares": [
+      {"spa": "correr", "eng": "run"},
+      {"spa": "comer", "eng": "eat"},
+      {"spa": "dormir", "eng": "sleep"}
+    ],
+    "tobe": [
+      {"spa": "ser/estar", "eng": "to be"}
+    ]
+  },
+  "sustantivos": {
+    "animales": [
+      {"spa": "perro", "eng": "dog"},
+      {"spa": "gato", "eng": "cat"},
+      {"spa": "pájaro", "eng": "bird"}
+    ],
+    "objetos": [
+      {"spa": "mesa", "eng": "table"},
+      {"spa": "silla", "eng": "chair"},
+      {"spa": "libro", "eng": "book"}
+    ],
+    "personas": [
+      {"spa": "doctor", "eng": "doctor"},
+      {"spa": "maestro", "eng": "teacher"}
+    ]
+  },
+  "articulos": {
+    "definidos": [
+      {"spa": "el/la (singular)", "eng": "the"},
+      {"spa": "los/las (plural)", "eng": "the"}
+    ],
+    "indefinidos": [
+      {"spa": "un/una", "eng": "a/an"},
+      {"spa": "unos/unas", "eng": "some"}
+    ]
+  }
+}

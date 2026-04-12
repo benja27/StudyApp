@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useAppStore } from '../store/appStore';
-import { Plus, BookOpen, Play, Pencil, Check, X, Trash2, CheckSquare, Square, ArrowLeft, AlignLeft } from 'lucide-react';
+import { Plus, BookOpen, Play, Pencil, Check, X, Trash2, CheckSquare, Square, ArrowLeft, AlignLeft, Search } from 'lucide-react';
 
 const LANGUAGES = [
   { id: 'english', name: 'Inglés', icon: '🇺🇸', color: 'bg-blue-50 text-blue-700 border-blue-200' },
@@ -23,7 +23,22 @@ export default function Home() {
   const [newCollectionName, setNewCollectionName] = useState('');
   const [showRawInput, setShowRawInput] = useState(false);
   const [rawTextValue, setRawTextValue] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showRudeMessage, setShowRudeMessage] = useState(false);
 
+  if (showRudeMessage) {
+    return (
+       <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center p-4 animate-in fade-in duration-300">
+         <h1 className="text-6xl sm:text-7xl md:text-9xl font-black text-red-500 text-center animate-pulse tracking-tighter drop-shadow-[0_0_20px_rgba(239,68,68,0.8)]">qué grosera :c</h1>
+         <button 
+           onClick={() => setShowRudeMessage(false)} 
+           className="mt-16 px-8 py-4 bg-red-600 text-white font-black text-xl uppercase tracking-widest rounded-full hover:scale-110 hover:bg-red-500 transition-all shadow-xl"
+         >
+           Lo siento
+         </button>
+       </div>
+    );
+  }
   // === LEVEL 1: LANGUAGES VIEW ===
   if (!activeLanguage) {
     return (
@@ -32,8 +47,30 @@ export default function Home() {
           <h2 className="text-3xl font-bold">Mis Idiomas</h2>
           <p className="text-slate-500">Selecciona el idioma que deseas gestionar o estudiar.</p>
         </div>
+        <div className="relative mb-8 max-w-md">
+           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+           <input 
+             type="text" 
+             placeholder="Buscar idioma o código secreto..." 
+             value={searchQuery}
+             onChange={(e) => {
+               const val = e.target.value;
+               setSearchQuery(val);
+               const clean = val.trim().toLowerCase();
+               if (['mich', 'michell', 'michel'].includes(clean)) {
+                  setSearchQuery('');
+                  navigate('EASTER_EGG');
+               } else if (clean === 'puto') {
+                  setSearchQuery('');
+                  setShowRudeMessage(true);
+               }
+             }}
+             className="w-full bg-white border border-slate-200 rounded-full pl-10 pr-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm"
+           />
+        </div>
+        
         <div className="grid sm:grid-cols-3 gap-6">
-          {LANGUAGES.map(l => (
+          {LANGUAGES.filter(l => l.name.toLowerCase().includes(searchQuery.toLowerCase())).map(l => (
             <button 
               key={l.id} 
               onClick={() => setActiveLanguage(l.id)}
@@ -259,8 +296,8 @@ export default function Home() {
   const collectionData = collections.find(c => c.id === activeCollectionId);
   const currentLangCollections = collections.filter(c => c.language === activeLanguage);
   
-  // Filtrar textos solo de esta colección
-  const currentTexts = texts.filter(t => t.collectionId === activeCollectionId);
+  // Filtrar textos solo de esta colección y aplicar búsqueda si existe
+  const currentTexts = texts.filter(t => t.collectionId === activeCollectionId && (!searchQuery || t.title.toLowerCase().includes(searchQuery.toLowerCase())));
   const displayedTexts = showAll ? currentTexts : currentTexts.slice(0, 5);
 
   const handleSaveTitle = async (textToEdit) => {
@@ -453,6 +490,28 @@ export default function Home() {
 
       {/* LISTA DE TEXTOS */}
       <div>
+        <div className="relative mb-6">
+           <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+           <input 
+             type="text" 
+             placeholder="Buscar un texto por título..." 
+             value={searchQuery}
+             onChange={(e) => {
+               const val = e.target.value;
+               setSearchQuery(val);
+               const clean = val.trim().toLowerCase();
+               if (['mich', 'michell', 'michel'].includes(clean)) {
+                  setSearchQuery('');
+                  navigate('EASTER_EGG');
+               } else if (clean === 'puto') {
+                  setSearchQuery('');
+                  setShowRudeMessage(true);
+               }
+             }}
+             className="w-full bg-white border border-slate-200 rounded-xl pl-10 pr-4 py-3 outline-none focus:ring-2 focus:ring-primary-500 shadow-sm transition-shadow"
+           />
+        </div>
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
           <div className="flex items-center gap-3">
             <h3 className="text-xl font-semibold">Tus Textos ({currentTexts.length})</h3>
