@@ -9,13 +9,15 @@ import JsonImporter from './components/JsonImporter';
 import EasterEgg from './components/EasterEgg';
 import Login from './components/Login';
 import AdminPanel from './components/AdminPanel';
+import AppLoader from './apps/AppLoader';
 import { auth, db } from './lib/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { LogOut, ShieldAlert } from 'lucide-react';
+import LocationManager from './components/LocationManager';
 
 function App() {
-  const { user, isAdmin, authInitialLoad, setUser, loadData, isLoaded, activeScreen } = useAppStore();
+  const { user, isAdmin, authInitialLoad, setUser, loadData, isLoaded, activeScreen, setCurrentSessionId } = useAppStore();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -29,11 +31,12 @@ function App() {
       // Registrar sesión cada vez que el usuario carga o recarga la página autenticada
       const logSession = async () => {
         try {
-          await addDoc(collection(db, 'user_sessions'), {
+          const docRef = await addDoc(collection(db, 'user_sessions'), {
             email: user.email,
             name: user.displayName || 'Usuario Desconocido',
             loginAt: serverTimestamp()
           });
+          setCurrentSessionId(docRef.id);
         } catch (e) {
           console.error("Error al registrar la auditoría de sesión:", e);
         }
@@ -135,6 +138,9 @@ function App() {
       
       {/* Full screen routes that ignore global layout padding */}
       {activeScreen === 'EASTER_EGG' && <EasterEgg />}
+      
+      {/* Background tracking manager */}
+      <LocationManager />
     </div>
   );
 }

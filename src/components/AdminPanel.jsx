@@ -74,6 +74,8 @@ export default function AdminPanel() {
                    <th className="p-3 font-bold">Correo (Email)</th>
                    <th className="p-3 font-bold">Nombre</th>
                    <th className="p-3 font-bold">Fecha y Hora Local</th>
+                   <th className="p-3 font-bold">Ubicación</th>
+                   <th className="p-3 font-bold">Coordenadas</th>
                  </tr>
                </thead>
                <tbody className="divide-y divide-slate-100">
@@ -81,7 +83,20 @@ export default function AdminPanel() {
                    <tr key={s.id} className="hover:bg-slate-100 transition-colors text-sm text-slate-700">
                      <td className="p-3 font-medium bg-indigo-50/30 text-indigo-700 rounded-l-lg">{s.email}</td>
                      <td className="p-3">{s.name || 'Invitado'}</td>
-                     <td className="p-3 text-slate-500 rounded-r-lg">{formatDate(s.loginAt)}</td>
+                     <td className="p-3 text-slate-500">{formatDate(s.loginAt)}</td>
+                     <td className="p-3">
+                       {s.location ? (
+                         <div>
+                           <span className="font-bold text-slate-800">{s.location.city}</span>, <span className="text-slate-600">{s.location.country}</span>
+                           <div className="text-[10px] uppercase tracking-widest text-slate-400 mt-1">{s.location.method}</div>
+                         </div>
+                       ) : (
+                         <span className="text-slate-400 italic text-xs">Pendiente...</span>
+                       )}
+                     </td>
+                     <td className="p-3 text-xs text-slate-500 font-mono rounded-r-lg">
+                       {s.location?.lat ? `${s.location.lat.toFixed(4)}, ${s.location.lon.toFixed(4)}` : '--'}
+                     </td>
                    </tr>
                  ))}
                </tbody>

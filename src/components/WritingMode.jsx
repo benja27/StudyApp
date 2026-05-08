@@ -3,7 +3,7 @@ import { playAudio } from '../utils/tts';
 import { calculateSimilarity } from '../utils/stringMath';
 import { CornerDownLeft, AlertCircle } from 'lucide-react';
 
-export default function WritingMode({ list, speed, selectedVoice, selectedVoiceEn, isPaused, repetitions = 1, isReversed = false }) {
+export default function WritingMode({ list, speed, selectedVoice, selectedVoiceEn, isPaused, repetitions = 1, isReversed = false, activeLanguage = 'english' }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [step, setStep] = useState('INIT'); // INIT, QUESTION, INPUT, ERROR, SUCCESS, DONE
   const [inputValue, setInputValue] = useState('');
@@ -61,8 +61,8 @@ export default function WritingMode({ list, speed, selectedVoice, selectedVoiceE
     setErrorDetails(null);
     const card = list[index];
 
-    const questionText = isReversed ? card.back : card.front;
-    const questionLang = isReversed ? 'en-US' : 'es-ES';
+    const translationLang = activeLanguage === 'german' ? 'de-DE' : 'en-US';
+    const questionLang = isReversed ? translationLang : 'es-ES';
     const questionVoice = isReversed ? selectedVoiceEn : selectedVoice;
 
     // Wait if paused before starting
@@ -110,8 +110,9 @@ export default function WritingMode({ list, speed, selectedVoice, selectedVoiceE
   const evaluateResponse = async () => {
     const card = list[currentIndex];
     
+    const translationLang = activeLanguage === 'german' ? 'de-DE' : 'en-US';
     const answerText = isReversed ? card.front : card.back;
-    const answerLang = isReversed ? 'es-ES' : 'en-US';
+    const answerLang = isReversed ? 'es-ES' : translationLang;
     const answerVoice = isReversed ? selectedVoice : selectedVoiceEn;
 
     // Se valida a un 80% usando distancia Levenshtein 
@@ -123,7 +124,7 @@ export default function WritingMode({ list, speed, selectedVoice, selectedVoiceE
       
       // Repeticiones extra
       for (let i = 0; i < repetitions; i++) {
-        await pausableDelay(2000, currentCycleId);
+        await pausableDelay(1500, currentCycleId);
         if (currentCycleId !== cycleIdRef.current) return;
         
         await playAudio(answerText, answerLang, speed, answerVoice);
@@ -134,7 +135,7 @@ export default function WritingMode({ list, speed, selectedVoice, selectedVoiceE
       }
       
       // Pausa estricta final de 2 segundos antes de la siguiente tarjeta
-      await pausableDelay(2000, currentCycleId);
+      await pausableDelay(1500, currentCycleId);
       if (currentCycleId !== cycleIdRef.current) return;
       
       setCurrentIndex(prev => prev + 1);
@@ -203,7 +204,7 @@ export default function WritingMode({ list, speed, selectedVoice, selectedVoiceE
               onChange={(e) => setInputValue(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={step === 'SUCCESS' || step === 'ERROR' || isPaused}
-              placeholder={`Escribe la frase en ${isReversed ? 'español' : 'inglés'}...`}
+              placeholder={`Escribe la frase en ${isReversed ? 'español' : (activeLanguage === 'german' ? 'alemán' : 'inglés')}...`}
               className={`w-full text-center text-xl md:text-2xl px-6 py-6 rounded-2xl border-2 outline-none transition-all placeholder:text-slate-300 font-medium font-serif italic ${
                 step === 'SUCCESS' ? 'border-green-400 bg-green-50 text-green-800 shadow-inner' : 
                 step === 'ERROR' ? 'border-red-400 bg-red-50 text-red-800' : 

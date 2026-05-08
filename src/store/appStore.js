@@ -14,6 +14,10 @@ export const useAppStore = create((set, get) => ({
   activeScreen: 'HOME', // Posibles: 'HOME', 'CREATE_TEXT', 'TEXT_DETAILS', 'STUDY_SESSION', 'GENERATE_CSV', 'EASTER_EGG'
   activeTextId: null,
 
+  // Estado de Sesión y Ubicación
+  currentSessionId: null,
+  locationPermissionStatus: 'pending', // 'pending' | 'granted' | 'denied' | 'ip_fallback'
+
   // Estado de Datos
   texts: [],
   collections: [],
@@ -39,6 +43,10 @@ export const useAppStore = create((set, get) => ({
   setActiveCategory: (cat) => set({ activeCategory: cat, activeCollectionId: null, activeScreen: 'HOME' }),
   setActiveCollection: (id) => set({ activeCollectionId: id, activeScreen: 'HOME' }),
   goBackHome: () => set({ activeLanguage: null, activeCategory: null, activeCollectionId: null, activeScreen: 'HOME' }),
+
+  // Acciones de Sesión
+  setCurrentSessionId: (id) => set({ currentSessionId: id }),
+  setLocationPermissionStatus: (status) => set({ locationPermissionStatus: status }),
 
   // Acciones de Datos (Firebase Firestore)
   saveCollection: async (collectionToSave) => {
@@ -167,41 +175,7 @@ export const useAppStore = create((set, get) => ({
         }
       }
 
-      // MIGRACIÓN ESPECÍFICA: Mover textos puntuales a "english -> Especifico"
-      const specificTextTitles = ['aeromexico2', 'amex bienvenida 2', 'anuncio cabina'];
-      const textsToMove = texts.filter(t => specificTextTitles.includes(t.title.toLowerCase()));
 
-      if (textsToMove.length > 0) {
-        let specificCollection = collections.find(c => c.language === 'english' && c.name.toLowerCase() === 'especifico');
-        
-        if (!specificCollection) {
-          specificCollection = {
-            id: 'english-especifico-default',
-            language: 'english',
-            name: 'Especifico',
-            createdAt: Date.now()
-          };
-          collections.push(specificCollection);
-          if (isAdmin) {
-            try {
-              await setDoc(doc(db, `users/${user.uid}/collections`, specificCollection.id), specificCollection);
-            } catch(e) { console.error("Error creating especifico collection", e); }
-          }
-        }
-
-        texts = texts.map(t => {
-           if (specificTextTitles.includes(t.title.toLowerCase()) && t.collectionId !== specificCollection.id) {
-               t.collectionId = specificCollection.id;
-               if (isAdmin) {
-                 try {
-                   const docRef = doc(db, `users/${user.uid}/texts`, t.id);
-                   setDoc(docRef, { ...t, collectionId: specificCollection.id }, { merge: true });
-                 } catch(e) {}
-               }
-           }
-           return t;
-        });
-      }
 
       if (!isAdmin) {
           texts = texts.filter(t => !t.isPrivate);

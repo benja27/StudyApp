@@ -5,7 +5,7 @@ import ReadingMode from './ReadingMode';
 import WritingMode from './WritingMode';
 
 export default function StudySession() {
-  const { studyList, navigate } = useAppStore();
+  const { studyList, navigate, activeLanguage } = useAppStore();
   
   const [mode, setMode] = useState('READING'); // 'READING' or 'WRITING'
   const [isPlaying, setIsPlaying] = useState(false);
@@ -30,9 +30,9 @@ export default function StudySession() {
   useEffect(() => {
     if (!window.speechSynthesis) return;
     const loadVoices = () => {
-      const allVoices = window.speechSynthesis.getVoices();
       const availableVoices = allVoices.filter(v => v.lang.startsWith('es'));
-      const availableEnVoices = allVoices.filter(v => v.lang.startsWith('en'));
+      const translationLangPrefix = activeLanguage === 'german' ? 'de' : 'en';
+      const availableEnVoices = allVoices.filter(v => v.lang.startsWith(translationLangPrefix));
       
       setVoices(availableVoices);
       setEnVoices(availableEnVoices);
@@ -204,7 +204,9 @@ export default function StudySession() {
                 </select>
               </div>
               <div className="sm:col-span-1 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
-                <label className="block text-sm font-bold text-slate-600 mb-2">Voz en Inglés</label>
+                <label className="block text-sm font-bold text-slate-600 mb-2">
+                  Voz en {activeLanguage === 'german' ? 'Alemán' : 'Inglés'}
+                </label>
                 <select 
                   value={selectedVoiceEn} 
                   onChange={(e) => setSelectedVoiceEn(e.target.value)}
@@ -242,7 +244,7 @@ export default function StudySession() {
               <div className="sm:col-span-1 flex items-center justify-between bg-white p-4 rounded-xl border border-slate-100 shadow-sm cursor-pointer hover:bg-slate-50" onClick={() => setIsReversed(!isReversed)}>
                 <div>
                   <span className="block text-sm font-bold text-slate-700">Modo Invertido</span>
-                  <span className="text-xs text-slate-500">A partir de inglés.</span>
+                  <span className="text-xs text-slate-500">A partir de {activeLanguage === 'german' ? 'alemán' : 'inglés'}.</span>
                 </div>
                 <div className={`w-14 h-7 rounded-full relative transition-colors ${isReversed ? 'bg-indigo-500' : 'bg-slate-200'}`}>
                   <span className={`absolute top-1 w-5 h-5 rounded-full bg-white transition-all shadow-sm ${isReversed ? 'left-8' : 'left-1'}`}></span>
@@ -310,6 +312,7 @@ export default function StudySession() {
           isPaused={isPaused}
           repetitions={repetitions}
           isReversed={isReversed}
+          activeLanguage={activeLanguage}
           onFinish={handleStop} 
         />
       )}
@@ -324,6 +327,7 @@ export default function StudySession() {
           isPaused={isPaused}
           repetitions={repetitions}
           isReversed={isReversed}
+          activeLanguage={activeLanguage}
           onFinish={handleStop} 
         />
       )}

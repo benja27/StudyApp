@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { playAudio } from '../utils/tts';
 
-export default function ReadingMode({ list, pauseSeconds, speed, selectedVoice, selectedVoiceEn, isPaused, repetitions = 1, isReversed = false }) {
+export default function ReadingMode({ list, pauseSeconds, speed, selectedVoice, selectedVoiceEn, isPaused, repetitions = 1, isReversed = false, activeLanguage = 'english' }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [step, setStep] = useState('INIT'); // INIT, QUESTION, PAUSE, ANSWER, DONE
   const cycleIdRef = useRef(0);
@@ -56,7 +56,8 @@ export default function ReadingMode({ list, pauseSeconds, speed, selectedVoice, 
     const questionVoice = isReversed ? selectedVoiceEn : selectedVoice;
 
     const answerText = isReversed ? card.front : card.back;
-    const answerLang = isReversed ? 'es-ES' : 'en-US';
+    const translationLang = activeLanguage === 'german' ? 'de-DE' : 'en-US';
+    const answerLang = isReversed ? 'es-ES' : translationLang;
     const answerVoice = isReversed ? selectedVoice : selectedVoiceEn;
 
     // Wait if paused before starting
@@ -74,12 +75,7 @@ export default function ReadingMode({ list, pauseSeconds, speed, selectedVoice, 
     // 2. Pausa
     setStep('PAUSE');
     
-    // Calcular si la frase en español es de una sola palabra
-    const cleanSpanish = card.front.replace(/[^\w\sáéíóúÁÉÍÓÚñÑüÜ]/g, '').trim();
-    const spanishWords = cleanSpanish ? cleanSpanish.split(/\s+/) : [];
-    const isSingleWord = spanishWords.length === 1;
-    
-    const actualPauseMs = isSingleWord ? 1500 : (pauseSeconds * 1000);
+    const actualPauseMs = pauseSeconds * 1000;
     
     await pausableDelay(actualPauseMs, cycleId);
     if (cycleId !== cycleIdRef.current) return;
@@ -95,7 +91,7 @@ export default function ReadingMode({ list, pauseSeconds, speed, selectedVoice, 
     // 4. Repeticiones extra
     for (let i = 0; i < repetitions; i++) {
         setStep('HIDE_ANSWER');
-        await pausableDelay(2000, cycleId);
+        await pausableDelay(1500, cycleId);
         if (cycleId !== cycleIdRef.current) return;
 
         setStep('ANSWER');
@@ -108,7 +104,7 @@ export default function ReadingMode({ list, pauseSeconds, speed, selectedVoice, 
 
     // 5. Pausa final estricta de 2 segundos antes de la siguiente tarjeta
     setStep('HIDE_ANSWER');
-    await pausableDelay(2000, cycleId);
+    await pausableDelay(1500, cycleId);
     if (cycleId !== cycleIdRef.current) return;
 
     // Siguiente Tarjeta
