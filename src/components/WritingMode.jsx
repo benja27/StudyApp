@@ -61,6 +61,7 @@ export default function WritingMode({ list, speed, selectedVoice, selectedVoiceE
     setErrorDetails(null);
     const card = list[index];
 
+    const questionText = isReversed ? card.back : card.front;
     const translationLang = activeLanguage === 'german' ? 'de-DE' : 'en-US';
     const questionLang = isReversed ? translationLang : 'es-ES';
     const questionVoice = isReversed ? selectedVoiceEn : selectedVoice;
