@@ -5,8 +5,9 @@ import { CornerDownLeft, AlertCircle, Pause } from 'lucide-react';
 
 export default function WritingMode({ list, speed, selectedVoice, selectedVoiceEn, isPaused, repetitions = 1, isReversed = false, activeLanguage = 'english' }) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [step, setStep] = useState('INIT'); // INIT, QUESTION, INPUT, ERROR, SUCCESS, DONE
+  const [step, setStep] = useState('INIT'); // INIT, QUESTION, INPUT, ERROR, SUCCESS, REVIEW, DONE
   const [inputValue, setInputValue] = useState('');
+  const [reviewCount, setReviewCount] = useState(0);
   
   const [errorDetails, setErrorDetails] = useState(null); // { score, expected, input }
   const inputRef = useRef(null);
@@ -102,10 +103,64 @@ export default function WritingMode({ list, speed, selectedVoice, selectedVoiceE
 
   const handleKeyDown = (e) => {
     if (isPaused) return;
-    // Evaluar con ENTER (soporta móviles sin teclado si el usuario presiona Enter en el input)
     if (e.key === 'Enter' && inputValue.trim()) {
-      evaluateResponse();
+      if (step === 'REVIEW') {
+        evaluateReview();
+      } else {
+        evaluateResponse();
+      }
     }
+  };
+
+  const evaluateReview = () => {
+    const card = list[currentIndex];
+    const answerText = isReversed ? card.front : card.back;
+    
+    // Check exact match (ignoring leading/trailing spaces)
+    if (inputValue.trim() === answerText.trim()) {
+      const nextCount = reviewCount + 1;
+      if (nextCount >= 7) {
+        setReviewCount(0);
+        finishCard();
+      } else {
+        setReviewCount(nextCount);
+        setInputValue('');
+      }
+    } else {
+      setReviewCount(0);
+      setInputValue('');
+      // Optional: visual feedback for reset
+    }
+  };
+
+  const finishCard = async () => {
+    const card = list[currentIndex];
+    const translationLang = activeLanguage === 'german' ? 'de-DE' : 'en-US';
+    const answerText = isReversed ? card.front : card.back;
+    const answerLang = isReversed ? 'es-ES' : translationLang;
+    const answerVoice = isReversed ? selectedVoice : selectedVoiceEn;
+    const currentCycleId = cycleIdRef.current;
+
+    setStep('SUCCESS');
+    
+    // Repeticiones extra
+    for (let i = 0; i < repetitions; i++) {
+      await pausableDelay(1500, currentCycleId);
+      if (currentCycleId !== cycleIdRef.current) return;
+      
+      await playAudio(answerText, answerLang, speed, answerVoice);
+      if (currentCycleId !== cycleIdRef.current) return;
+      
+      await waitWhilePaused(currentCycleId);
+      if (currentCycleId !== cycleIdRef.current) return;
+    }
+    
+    // Pausa estricta final de 1.5 segundos antes de la siguiente tarjeta
+    await pausableDelay(1500, currentCycleId);
+    if (currentCycleId !== cycleIdRef.current) return;
+    
+    setCurrentIndex(prev => prev + 1);
+    startCycle(currentIndex + 1, currentCycleId);
   };
 
   const evaluateResponse = async () => {
@@ -121,26 +176,14 @@ export default function WritingMode({ list, speed, selectedVoice, selectedVoiceE
     const currentCycleId = cycleIdRef.current;
 
     if (score >= 80) {
-      setStep('SUCCESS');
-      
-      // Repeticiones extra
-      for (let i = 0; i < repetitions; i++) {
-        await pausableDelay(1500, currentCycleId);
-        if (currentCycleId !== cycleIdRef.current) return;
-        
-        await playAudio(answerText, answerLang, speed, answerVoice);
-        if (currentCycleId !== cycleIdRef.current) return;
-        
-        await waitWhilePaused(currentCycleId);
-        if (currentCycleId !== cycleIdRef.current) return;
-      }
-      
-      // Pausa estricta final de 2 segundos antes de la siguiente tarjeta
-      await pausableDelay(1500, currentCycleId);
-      if (currentCycleId !== cycleIdRef.current) return;
-      
-      setCurrentIndex(prev => prev + 1);
-      startCycle(currentIndex + 1, currentCycleId);
+      finishCard();
+    } else if (score < 50 || inputValue.toLowerCase().trim() === 'asdf') {
+      // Modo Repaso
+      setStep('REVIEW');
+      setReviewCount(0);
+      setInputValue('');
+      setErrorDetails({ score: Math.round(score), expected: answerText, input: inputValue });
+      await playAudio("Modo repaso activado. Escribe la respuesta correcta 7 veces.", 'es-ES', speed, selectedVoice);
     } else {
       setStep('ERROR');
       setErrorDetails({ score: Math.round(score), expected: answerText, input: inputValue });
@@ -257,6 +300,85 @@ export default function WritingMode({ list, speed, selectedVoice, selectedVoiceE
               ¡Excelente! {repetitions > 1 ? `Repitiendo respuesta (${repetitions}x)...` : 'Siguiente frase preparándose...'}
             </div>
           )}
+        </div>
+      )}
+
+      {/* MODAL MODO REPASO */}
+      {step === 'REVIEW' && (
+        <div className="fixed inset-0 z-[100] bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 animate-in fade-in duration-300">
+          <div className="bg-white w-full max-w-2xl rounded-[40px] shadow-2xl overflow-hidden border border-white/20 flex flex-col">
+            
+            {/* Header del Modal */}
+            <div className="bg-amber-500 p-6 text-white text-center">
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <AlertCircle size={32} fill="white" className="text-amber-500" />
+                <h3 className="text-2xl font-black uppercase tracking-tighter">Modo Repaso Activo</h3>
+              </div>
+              <p className="text-amber-50 font-bold text-sm">Debes escribir la respuesta correcta 7 veces consecutivas.</p>
+            </div>
+
+            <div className="p-8 sm:p-12 flex-1 flex flex-col items-center text-center">
+              
+              <div className="mb-8 w-full">
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] block mb-3">Respuesta Correcta:</span>
+                <div className="bg-slate-50 p-6 rounded-3xl border-2 border-slate-100 shadow-inner">
+                  <p className="text-3xl sm:text-4xl font-black text-slate-800 leading-tight">
+                    "{errorDetails?.expected}"
+                  </p>
+                </div>
+              </div>
+
+              <div className="w-full relative">
+                <div className="flex items-center justify-between mb-4 px-2">
+                   <span className="text-xs font-bold text-slate-500">Progreso de escritura</span>
+                   <span className="text-lg font-black text-amber-600 bg-amber-50 px-3 py-1 rounded-full border border-amber-200">
+                     {reviewCount} / 7
+                   </span>
+                </div>
+                
+                <div className="relative group">
+                  <input 
+                    ref={inputRef}
+                    autoFocus
+                    type="text"
+                    value={inputValue}
+                    onChange={(e) => setInputValue(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Escribe la frase exactamente..."
+                    className="w-full text-center text-xl md:text-2xl px-6 py-6 rounded-3xl border-4 border-slate-100 bg-slate-50 focus:border-amber-400 focus:bg-white focus:ring-8 focus:ring-amber-400/10 outline-none transition-all placeholder:text-slate-300 font-medium italic shadow-inner"
+                    spellCheck="false"
+                    autoComplete="off"
+                  />
+                  
+                  {inputValue.trim() && (
+                    <button 
+                      onClick={evaluateReview}
+                      className="absolute right-3 top-3 bottom-3 bg-amber-500 hover:bg-amber-600 text-white px-6 rounded-2xl font-black transition-all flex items-center gap-2 shadow-md hover:scale-105 active:scale-95"
+                    >
+                      <CornerDownLeft size={20} />
+                    </button>
+                  )}
+                </div>
+
+                <div className="mt-6 flex gap-1 justify-center">
+                  {[...Array(7)].map((_, i) => (
+                    <div 
+                      key={i} 
+                      className={`h-2 flex-1 rounded-full transition-all duration-500 ${i < reviewCount ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 'bg-slate-100'}`}
+                    ></div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+            <div className="p-6 bg-slate-50 border-t border-slate-100 text-center">
+              <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">
+                Si te equivocas en una sola letra, el contador volverá a cero.
+              </p>
+            </div>
+
+          </div>
         </div>
       )}
     </div>
