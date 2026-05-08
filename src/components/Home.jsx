@@ -12,7 +12,7 @@ export default function Home() {
   const {
     texts, collections, apps, activeLanguage, activeCategory, activeCollectionId,
     setActiveLanguage, setActiveCategory, setActiveCollection, goBackHome,
-    isAdmin, saveText, updateText, deleteText, saveCollection, saveApp, deleteCollection, navigate
+    isAdmin, saveText, updateText, deleteText, saveCollection, saveApp, deleteCollection, navigate, startStudySession
   } = useAppStore();
 
   const [showAll, setShowAll] = useState(false);
@@ -414,6 +414,23 @@ export default function Home() {
     }
   };
 
+  const handleStudySelected = () => {
+    const textsToStudy = texts.filter(t => selectedTextIds.includes(t.id));
+    // Combinar todas las tarjetas de los textos seleccionados
+    const allCards = textsToStudy.flatMap(t => t.cards.map(c => ({
+      ...c, 
+      textTitle: t.title,
+      isActive: true // Aseguramos que todas estén activas por defecto como pidió el usuario anteriormente
+    })));
+    
+    if (allCards.length === 0) {
+      alert("No hay tarjetas en los textos seleccionados.");
+      return;
+    }
+    
+    startStudySession(allCards);
+  };
+
   const handleDeleteIndividual = async (id, title) => {
     if (confirm(`¿Estás seguro de eliminar el texto "${title}" de manera permanente?`)) {
       await deleteText(id);
@@ -527,13 +544,22 @@ export default function Home() {
           </div>
           <div className="flex items-center gap-4">
             {isAdmin && selectedTextIds.length > 0 && (
-              <button
-                onClick={handleDeleteSelected}
-                className="flex items-center gap-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 px-4 py-2 rounded-lg transition-colors"
-                title={`Eliminar ${selectedTextIds.length} seleccionado(s)`}
-              >
-                <Trash2 size={16} /> Eliminar seleccionados
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleDeleteSelected}
+                  className="flex items-center gap-2 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 px-4 py-2 rounded-lg transition-colors"
+                  title={`Eliminar ${selectedTextIds.length} seleccionado(s)`}
+                >
+                  <Trash2 size={16} /> Eliminar seleccionados
+                </button>
+                <button
+                  onClick={handleStudySelected}
+                  className="flex items-center gap-2 text-sm font-black text-white bg-slate-900 hover:bg-slate-800 px-4 py-2 rounded-lg transition-transform hover:-translate-y-0.5 shadow-md shadow-slate-200"
+                  title={`Estudiar tarjetas de ${selectedTextIds.length} texto(s)`}
+                >
+                  <Play size={16} className="fill-white" /> Estudiar seleccionados
+                </button>
+              </div>
             )}
             {currentTexts.length > 5 && (
               <button
