@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { playAudio } from '../utils/tts';
 
-export default function ReadingMode({ list, pauseSeconds, speed, selectedVoice, selectedVoiceEn, isPaused, repetitions = 1, isReversed = false, activeLanguage = 'english' }) {
+export default function ReadingMode({ list, pauseSeconds, speed, selectedVoice, selectedVoiceEn, isPaused, repetitions = 1, isReversed = false, activeLanguage = 'english', setIsPaused, onFinish }) {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [step, setStep] = useState('INIT'); // INIT, QUESTION, PAUSE, ANSWER, DONE
   const cycleIdRef = useRef(0);
@@ -111,6 +111,50 @@ export default function ReadingMode({ list, pauseSeconds, speed, selectedVoice, 
     setCurrentIndex(index + 1);
     startCycle(index + 1, cycleId);
   }
+
+  const skipToNext = () => {
+    window.speechSynthesis.cancel();
+    clearTimeout(timeoutRef.current);
+    const newCycleId = ++cycleIdRef.current;
+    const nextIndex = currentIndex + 1;
+    
+    if (nextIndex < list.length) {
+      setCurrentIndex(nextIndex);
+      startCycle(nextIndex, newCycleId);
+    } else {
+      onFinish();
+    }
+  };
+
+  const skipToPrev = () => {
+    if (currentIndex > 0) {
+      window.speechSynthesis.cancel();
+      clearTimeout(timeoutRef.current);
+      const newCycleId = ++cycleIdRef.current;
+      const prevIndex = currentIndex - 1;
+      setCurrentIndex(prevIndex);
+      startCycle(prevIndex, newCycleId);
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (['INPUT', 'TEXTAREA'].includes(document.activeElement?.tagName)) return;
+
+      if (e.key === ' ') {
+        e.preventDefault();
+        setIsPaused(prev => !prev);
+      } else if (e.key === 'ArrowRight') {
+        skipToNext();
+      } else if (e.key === 'ArrowLeft') {
+        skipToPrev();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex, list.length, setIsPaused]);
 
   useEffect(() => {
     const currentCycleId = ++cycleIdRef.current;

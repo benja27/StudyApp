@@ -314,6 +314,7 @@ export default function StudySession() {
           repetitions={repetitions}
           isReversed={isReversed}
           activeLanguage={activeLanguage}
+          setIsPaused={setIsPaused}
           onFinish={handleStop} 
         />
       )}
