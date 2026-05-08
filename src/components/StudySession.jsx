@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useAppStore } from '../store/appStore';
-import { ArrowLeft, Play, Square, Settings2, ArrowRight, Pause, RotateCcw } from 'lucide-react';
+import { ArrowLeft, Play, Square, Settings2, ArrowRight, Pause, RotateCcw, Zap } from 'lucide-react';
 import ReadingMode from './ReadingMode';
 import WritingMode from './WritingMode';
+import MixedMode from './MixedMode';
 
 export default function StudySession() {
   const { studyList, navigate, activeLanguage } = useAppStore();
@@ -127,7 +128,11 @@ export default function StudySession() {
           <button 
             onClick={handleStart}
             disabled={activeList.length === 0}
-            className={`w-full py-4 rounded-2xl font-black text-xl text-white transition-transform hover:-translate-y-1 shadow-md hover:shadow-lg flex items-center justify-center gap-3 mb-8 disabled:opacity-50 disabled:hover:translate-y-0 disabled:cursor-not-allowed ${mode === 'READING' ? 'bg-primary-600 hover:bg-primary-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+            className={`w-full py-4 rounded-2xl font-black text-xl text-white transition-transform hover:-translate-y-1 shadow-md hover:shadow-lg flex items-center justify-center gap-3 mb-8 disabled:opacity-50 disabled:hover:translate-y-0 disabled:cursor-not-allowed ${
+              mode === 'READING' ? 'bg-primary-600 hover:bg-primary-700' : 
+              mode === 'WRITING' ? 'bg-indigo-600 hover:bg-indigo-700' : 
+              'bg-orange-600 hover:bg-orange-700'
+            }`}
           >
             <Play size={24} className="fill-white" /> {activeList.length === 0 ? 'Sin Tarjetas Seleccionadas' : 'Iniciar Estudio Local'}
           </button>
@@ -138,7 +143,7 @@ export default function StudySession() {
               
               <div className="sm:col-span-2 bg-white p-4 rounded-xl border border-slate-100 shadow-sm">
                 <label className="block text-sm font-bold text-slate-600 mb-3">Modo de Estudio</label>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
                   <div 
                     onClick={() => setMode('READING')}
                     className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all ${mode === 'READING' ? 'border-primary-500 bg-primary-50 text-primary-700' : 'border-slate-100 hover:border-slate-200 text-slate-500'}`}
@@ -152,6 +157,13 @@ export default function StudySession() {
                   >
                     <ArrowRight size={24} />
                     <span className="font-bold">Escritura</span>
+                  </div>
+                  <div 
+                    onClick={() => setMode('MIXED')}
+                    className={`cursor-pointer border-2 rounded-xl p-4 flex flex-col items-center gap-2 transition-all ${mode === 'MIXED' ? 'border-orange-500 bg-orange-50 text-orange-700' : 'border-slate-100 hover:border-slate-200 text-slate-500'}`}
+                  >
+                    <Zap size={24} className={mode === 'MIXED' ? 'fill-orange-600' : ''} />
+                    <span className="font-bold">Mixto</span>
                   </div>
                 </div>
               </div>
@@ -298,8 +310,12 @@ export default function StudySession() {
         
         <div className="flex items-center gap-3">
           <span className="text-xs text-slate-400 font-bold uppercase tracking-widest hidden sm:inline-block">Modo Activo</span>
-          <div className={`text-sm font-bold px-4 py-2 rounded-xl ${mode === 'READING' ? 'bg-primary-100 text-primary-700' : 'bg-indigo-100 text-indigo-700'}`}>
-            {mode === 'READING' ? 'Lectura Automática' : 'Escritura Interactiva'}
+          <div className={`text-sm font-bold px-4 py-2 rounded-xl ${
+            mode === 'READING' ? 'bg-primary-100 text-primary-700' : 
+            mode === 'WRITING' ? 'bg-indigo-100 text-indigo-700' : 
+            'bg-orange-100 text-orange-700'
+          }`}>
+            {mode === 'READING' ? 'Lectura Automática' : mode === 'WRITING' ? 'Escritura Interactiva' : 'Modo Mixto'}
           </div>
         </div>
       </div>
@@ -332,6 +348,23 @@ export default function StudySession() {
           repetitions={repetitions}
           isReversed={isReversed}
           activeLanguage={activeLanguage}
+          onFinish={handleStop} 
+        />
+      )}
+
+      {mode === 'MIXED' && (
+        <MixedMode 
+          key={sessionKey}
+          list={activeList} 
+          pauseSeconds={pauseSeconds} 
+          speed={speed} 
+          selectedVoice={selectedVoice}
+          selectedVoiceEn={selectedVoiceEn}
+          isPaused={isPaused}
+          repetitions={repetitions}
+          isReversed={isReversed}
+          activeLanguage={activeLanguage}
+          setIsPaused={setIsPaused}
           onFinish={handleStop} 
         />
       )}
