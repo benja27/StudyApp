@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { playAudio } from '../utils/tts';
+import { Pause } from 'lucide-react';
 
 export default function ReadingMode({ list, pauseSeconds, speed, selectedVoice, selectedVoiceEn, isPaused, repetitions = 1, isReversed = false, activeLanguage = 'english', setIsPaused, onFinish }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -197,11 +198,8 @@ export default function ReadingMode({ list, pauseSeconds, speed, selectedVoice, 
       <div className="absolute bottom-0 left-0 w-32 h-32 bg-slate-50 rounded-tr-[50px] -z-10 opacity-60"></div>
 
       {isPaused && (
-        <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] z-20 flex items-center justify-center rounded-3xl animate-in fade-in">
-          <div className="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center gap-4 text-amber-600 border border-amber-100">
-             <span className="font-bold text-xl uppercase tracking-wider">Estudio en Pausa</span>
-             <p className="text-sm text-slate-500">Presiona "Reanudar" o la tecla P para continuar.</p>
-          </div>
+        <div className="absolute top-4 left-4 z-30 flex items-center gap-2 bg-amber-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest animate-pulse shadow-lg border border-white/20">
+          <Pause size={14} fill="white" /> PAUSADO
         </div>
       )}
 

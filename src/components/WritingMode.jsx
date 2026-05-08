@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { playAudio } from '../utils/tts';
 import { calculateSimilarity } from '../utils/stringMath';
-import { CornerDownLeft, AlertCircle } from 'lucide-react';
+import { CornerDownLeft, AlertCircle, Pause } from 'lucide-react';
 
 export default function WritingMode({ list, speed, selectedVoice, selectedVoiceEn, isPaused, repetitions = 1, isReversed = false, activeLanguage = 'english' }) {
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -186,12 +186,9 @@ export default function WritingMode({ list, speed, selectedVoice, selectedVoiceE
       </div>
       
       {isPaused && (
-         <div className="absolute inset-0 bg-white/40 backdrop-blur-[2px] z-20 flex items-center justify-center rounded-3xl animate-in fade-in">
-           <div className="bg-white p-6 rounded-2xl shadow-xl flex flex-col items-center gap-4 text-amber-600 border border-amber-100">
-              <span className="font-bold text-xl uppercase tracking-wider">Estudio en Pausa</span>
-              <p className="text-sm text-slate-500">Presiona "Reanudar" o la tecla P para continuar.</p>
-           </div>
-         </div>
+        <div className="absolute top-4 left-4 z-30 flex items-center gap-2 bg-amber-500 text-white px-4 py-1.5 rounded-full text-[10px] font-black tracking-widest animate-pulse shadow-lg border border-white/20">
+          <Pause size={14} fill="white" /> PAUSADO
+        </div>
       )}
 
       {(step === 'INPUT' || step === 'SUCCESS' || step === 'ERROR') && (
