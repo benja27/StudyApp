@@ -7,7 +7,7 @@ export default function TextDetails() {
   const text = texts.find(t => t.id === activeTextId);
 
   // Mantenemos una copia local para la edición
-  const [cards, setCards] = useState(text ? [...text.cards] : []);
+  const [cards, setCards] = useState(text ? text.cards.map(c => ({ ...c, isActive: true })) : []);
   const [hasChanges, setHasChanges] = useState(false);
   
   // Estado para la edición en línea de tarjetas

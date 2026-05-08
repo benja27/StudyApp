@@ -16,7 +16,7 @@ export default function StudySession() {
   // Settings
   const [pauseSeconds, setPauseSeconds] = useState(3);
   const [speed, setSpeed] = useState(1.0);
-  const [isRandom, setIsRandom] = useState(false);
+  const [isRandom, setIsRandom] = useState(true);
   const [repetitions, setRepetitions] = useState(0); // 0 repeticiones extra por defecto
   const [isReversed, setIsReversed] = useState(false);
   const [voices, setVoices] = useState([]);
@@ -123,6 +123,14 @@ export default function StudySession() {
           
           <h2 className="text-3xl font-extrabold mb-2 text-slate-800">Preparar Sesión</h2>
           <p className="text-slate-500 mb-8 font-medium">Vas a estudiar <span className="text-primary-600 font-bold bg-primary-50 px-2 py-0.5 rounded-md">{studyList.length}</span> tarjetas.</p>
+          
+          <button 
+            onClick={handleStart}
+            disabled={activeList.length === 0}
+            className={`w-full py-4 rounded-2xl font-black text-xl text-white transition-transform hover:-translate-y-1 shadow-md hover:shadow-lg flex items-center justify-center gap-3 mb-8 disabled:opacity-50 disabled:hover:translate-y-0 disabled:cursor-not-allowed ${mode === 'READING' ? 'bg-primary-600 hover:bg-primary-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}
+          >
+            <Play size={24} className="fill-white" /> {activeList.length === 0 ? 'Sin Tarjetas Seleccionadas' : 'Iniciar Estudio Local'}
+          </button>
           
           <div className="bg-slate-50 p-6 rounded-2xl text-left border border-slate-200 mb-8">
             <h3 className="font-bold text-slate-700 mb-4 px-1 flex items-center gap-2"><Settings2 size={20} /> Configuración del motor</h3>
@@ -254,13 +262,7 @@ export default function StudySession() {
             </div>
           </div>
 
-          <button 
-            onClick={handleStart}
-            disabled={activeList.length === 0}
-            className={`w-full py-4 rounded-2xl font-black text-xl text-white transition-transform hover:-translate-y-1 shadow-md hover:shadow-lg flex items-center justify-center gap-3 disabled:opacity-50 disabled:hover:translate-y-0 disabled:cursor-not-allowed ${mode === 'READING' ? 'bg-primary-600 hover:bg-primary-700' : 'bg-indigo-600 hover:bg-indigo-700'}`}
-          >
-            <Play size={24} className="fill-white" /> {activeList.length === 0 ? 'Sin Tarjetas Seleccionadas' : 'Iniciar Estudio Local'}
-          </button>
+
         </div>
       </div>
     );
