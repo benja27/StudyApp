@@ -116,8 +116,10 @@ export default function WritingMode({ list, speed, selectedVoice, selectedVoiceE
     const card = list[currentIndex];
     const answerText = isReversed ? card.front : card.back;
     
-    // Check exact match (ignoring leading/trailing spaces)
-    if (inputValue.trim() === answerText.trim()) {
+    // Validar con el mismo 80% de similitud que el modo normal
+    const score = calculateSimilarity(inputValue, answerText);
+    
+    if (score >= 80) {
       const nextCount = reviewCount + 1;
       if (nextCount >= 7) {
         setReviewCount(0);
@@ -129,7 +131,6 @@ export default function WritingMode({ list, speed, selectedVoice, selectedVoiceE
     } else {
       setReviewCount(0);
       setInputValue('');
-      // Optional: visual feedback for reset
     }
   };
 
@@ -177,7 +178,7 @@ export default function WritingMode({ list, speed, selectedVoice, selectedVoiceE
 
     if (score >= 80) {
       finishCard();
-    } else if (score < 50 || inputValue.toLowerCase().trim() === 'asdf') {
+    } else if (score < 70 || inputValue.toLowerCase().trim() === 'asdf') {
       // Modo Repaso
       setStep('REVIEW');
       setReviewCount(0);
