@@ -30,6 +30,7 @@ export default function StudySession() {
   useEffect(() => {
     if (!window.speechSynthesis) return;
     const loadVoices = () => {
+      const allVoices = window.speechSynthesis.getVoices();
       const availableVoices = allVoices.filter(v => v.lang.startsWith('es'));
       const translationLangPrefix = activeLanguage === 'german' ? 'de' : 'en';
       const availableEnVoices = allVoices.filter(v => v.lang.startsWith(translationLangPrefix));
